@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node --version)",
+      "Bash(npm --version)",
+      "Bash(npx --version)",
+      "mcp__75b5da2a-140e-4322-bb2f-8ab64ed90afd__firecrawl_map",
+      "mcp__75b5da2a-140e-4322-bb2f-8ab64ed90afd__firecrawl_scrape",
+      "WebFetch(domain:api.kie.ai)",
+      "Bash(npx create-next-app@latest . --typescript --tailwind --app --src-dir --use-npm --eslint --no-turbopack --import-alias \"@/*\")",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(ls /c/Users/hp/Documents/creativeAI/creative-ai-app/node_modules/.bin/next*)",
+      "Bash(node -e \"console.log\\(require.resolve\\(''next/dist/bin/next'', { paths: [''/c/Users/hp/Documents/creativeAI/creative-ai-app''] }\\)\\)\")",
+      "Bash(node node_modules/next/dist/bin/next --help)",
+      "Bash(npm install @supabase/supabase-js @supabase/ssr lucide-react date-fns uuid)",
+      "Bash(npm install -D @types/uuid)",
+      "Bash(npx shadcn@latest init -d --yes)",
+      "Bash(npx shadcn@latest add button card input label textarea select badge dialog separator skeleton tabs sonner avatar table dropdown-menu --yes)",
+      "Bash(npx next build)",
+      "Bash(node node_modules/next/dist/bin/next build)",
+      "Bash(npx tsc --noEmit)"
+    ]
+  }
+}
