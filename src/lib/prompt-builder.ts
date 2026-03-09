@@ -42,12 +42,21 @@ export function buildPrompt(
   }
 
   // --- Ad Content ---
-  if (headline) {
-    parts.push(`The ad headline is: "${headline}".`);
+  const hasTextContent = !!(headline && headline.trim()) || !!(adCopy && adCopy.trim());
+
+  if (headline && headline.trim()) {
+    parts.push(`The ad headline is: "${headline.trim()}". Include this text prominently in the design.`);
   }
 
-  if (adCopy) {
-    parts.push(`The ad communicates: ${adCopy}`);
+  if (adCopy && adCopy.trim()) {
+    parts.push(`The ad communicates: ${adCopy.trim()}`);
+  }
+
+  if (!hasTextContent) {
+    parts.push(
+      `This is a VISUAL-ONLY creative — do NOT include any text, headlines, taglines, captions, or typographic elements in the image. ` +
+      `The output should be a pure visual/photographic composition that communicates the brand identity through imagery, color, and composition alone.`
+    );
   }
 
   // --- Platform ---
@@ -145,22 +154,39 @@ export function buildPrompt(
   }
 
   // --- Reference Images ---
+  // Balance: learn the brand identity & product from references, but create an ORIGINAL new ad.
+  // Do NOT copy/clone the references. Do NOT ignore them and invent from scratch.
   if (assetContext && (assetContext.logoCount > 0 || assetContext.creativeRefCount > 0 || assetContext.lpRefCount > 0)) {
-    const refParts: string[] = [];
-    if (assetContext.logoCount > 0)
-      refParts.push(`${assetContext.logoCount} brand logo(s)`);
-    if (assetContext.creativeRefCount > 0)
-      refParts.push(`${assetContext.creativeRefCount} creative reference(s) showing the brand's existing ad style`);
-    if (assetContext.lpRefCount > 0)
-      refParts.push(`${assetContext.lpRefCount} landing page reference(s) for visual consistency with the brand's web presence`);
+    parts.push(
+      `Reference images have been provided with this request. Study them carefully to understand the brand's visual identity, then create a fresh, ORIGINAL advertising composition inspired by them.`
+    );
+
+    if (assetContext.logoCount > 0) {
+      parts.push(
+        `LOGO (${assetContext.logoCount} image${assetContext.logoCount > 1 ? "s" : ""}): The brand's logo is included. Place it naturally in the ad layout. Keep the logo recognizable — do not redraw or heavily alter it.`
+      );
+    }
+
+    if (assetContext.creativeRefCount > 0) {
+      parts.push(
+        `CREATIVE REFERENCES (${assetContext.creativeRefCount} image${assetContext.creativeRefCount > 1 ? "s" : ""}): These show the brand's existing ad style and products. ` +
+        `Use them to understand what the brand's products look like, the photography style, composition patterns, and overall aesthetic. ` +
+        `Create a NEW original ad that feels like it belongs to the same brand campaign — same product category, similar quality and style — but with a fresh composition. ` +
+        `Do NOT just copy or recreate these reference images. Do NOT invent a completely different product that doesn't match the brand.`
+      );
+    }
+
+    if (assetContext.lpRefCount > 0) {
+      parts.push(
+        `LANDING PAGE REFERENCES (${assetContext.lpRefCount} image${assetContext.lpRefCount > 1 ? "s" : ""}): These show the brand's web presence. Match the overall visual language — color treatment, imagery style, and tone — so the ad feels consistent with the website.`
+      );
+    }
 
     parts.push(
-      `Reference images have been provided including ${refParts.join(", ")}. ` +
-      `Use these as visual direction — match the brand's visual identity, color scheme, style, and overall aesthetic. ` +
-      `The generated creative should look like it belongs to the same brand family as the reference materials.`
+      `KEY RULE: The output should be a NEW creative that is clearly on-brand (informed by the references) but NOT a duplicate of any reference image. Think of it as creating the next ad in the same campaign series.`
     );
   } else {
-    // Fallback: check client-level assets
+    // Fallback: auto-collected client images
     const assetCount =
       (client.assets_data?.logos?.length || 0) +
       (client.assets_data?.creatives_reference?.length || 0) +
@@ -174,21 +200,28 @@ export function buildPrompt(
       const refParts: string[] = [];
       if (client.logo_url) refParts.push("the brand logo");
       if (client.brand_book_url)
-        refParts.push("the brand book/guidelines document");
+        refParts.push("the brand book/guidelines");
       if (assetCount > 0)
         refParts.push(`${assetCount} brand asset(s)`);
 
       parts.push(
         `Reference images have been provided including ${refParts.join(", ")}. ` +
-        `Use these as visual direction — match the brand's visual identity, color scheme, style, and overall aesthetic. ` +
-        `The generated creative should look like it belongs to the same brand family as the reference materials.`
+        `Study them to understand the brand's visual identity, product appearance, and style. ` +
+        `Then create a NEW original ad that is clearly on-brand — same product category, similar quality and aesthetic — but with a fresh composition. ` +
+        `Do NOT copy the references. Do NOT ignore them and invent something unrelated. Create the next ad in the same campaign family.`
       );
     }
   }
 
-  parts.push(
-    "High quality, photorealistic rendering. No text or watermarks in the image. Suitable for commercial advertising use."
-  );
+  if (hasTextContent) {
+    parts.push(
+      "High quality, photorealistic rendering. No watermarks. The text/headline should be integrated cleanly into the design. Suitable for commercial advertising use."
+    );
+  } else {
+    parts.push(
+      "High quality, photorealistic rendering. Absolutely no text, words, letters, numbers, or watermarks anywhere in the image. Suitable for commercial advertising use."
+    );
+  }
 
   return parts.join(" ");
 }

@@ -34,7 +34,7 @@ export interface Client {
 export interface Campaign {
   id: string;
   client_id: string;
-  headline: string;
+  headline: string | null;
   ad_copy: string | null;
   platform: Platform;
   aspect_ratio: string;

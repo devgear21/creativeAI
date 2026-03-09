@@ -19,7 +19,8 @@
       "Bash(npx next build)",
       "Bash(node node_modules/next/dist/bin/next build)",
       "Bash(npx tsc --noEmit)",
-      "Bash(npm install @splinetool/runtime @splinetool/react-spline framer-motion)"
+      "Bash(npm install @splinetool/runtime @splinetool/react-spline framer-motion)",
+      "Bash(npx kill-port 3000)"
     ]
   }
 }

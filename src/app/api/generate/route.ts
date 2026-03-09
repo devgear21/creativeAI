@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
       .from("campaigns")
       .insert({
         client_id,
-        headline: headline || null,
+        headline: headline || "",
         ad_copy: ad_copy || null,
         platform,
         aspect_ratio,
