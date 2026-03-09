@@ -46,7 +46,7 @@ export function ClientForm({ defaultValues, mode }: ClientFormProps) {
   );
   const [brandBookName, setBrandBookName] = useState("");
 
-  // Assets — 3 subfields
+  // Assets
   const defaultAssets = defaultValues?.assets_data;
   const [logos, setLogos] = useState<string[]>(defaultAssets?.logos || []);
   const [logoNames, setLogoNames] = useState<string[]>([]);
@@ -134,7 +134,6 @@ export function ClientForm({ defaultValues, mode }: ClientFormProps) {
     }
   }
 
-  // Generic multi-file upload handler
   async function handleMultiUpload(
     e: React.ChangeEvent<HTMLInputElement>,
     setUrls: React.Dispatch<React.SetStateAction<string[]>>,
@@ -202,7 +201,6 @@ export function ClientForm({ defaultValues, mode }: ClientFormProps) {
 
     setSaving(true);
     try {
-      // Build assets_data JSONB
       const assetsData: ClientAssets = {
         logos,
         creatives_reference: creativesRef,
@@ -211,14 +209,12 @@ export function ClientForm({ defaultValues, mode }: ClientFormProps) {
       const hasAnyAssets =
         logos.length > 0 || creativesRef.length > 0 || landingPages.length > 0;
 
-      // Core fields (always sent)
       const payload: Record<string, unknown> = {
         name: name.trim(),
         brand_book_url: brandBookUrl || null,
         assets_data: hasAnyAssets ? assetsData : null,
       };
 
-      // Brand document fields — only include non-empty values
       const brandFields: Record<string, string> = {};
       if (brandDescription.trim()) brandFields.brand_description = brandDescription.trim();
       if (targetAudience.trim()) brandFields.target_audience = targetAudience.trim();
@@ -234,13 +230,11 @@ export function ClientForm({ defaultValues, mode }: ClientFormProps) {
       if (whatToAvoid.trim()) brandFields.what_to_avoid = whatToAvoid.trim();
       if (dosAndDonts.trim()) brandFields.dos_and_donts = dosAndDonts.trim();
 
-      // Merge brand fields into payload
       Object.assign(payload, brandFields);
 
       try {
         await saveClient(payload);
       } catch (err: unknown) {
-        // Supabase PostgrestError has .code and .message as plain properties
         const errObj = err as { code?: string; message?: string };
         const errMsg = errObj?.message || (err instanceof Error ? err.message : String(err));
         const errCode = errObj?.code || "";
@@ -250,12 +244,10 @@ export function ClientForm({ defaultValues, mode }: ClientFormProps) {
           const migrateData = await migrateRes.json();
 
           if (migrateRes.ok || migrateData.status === "already_migrated") {
-            // Wait a moment for schema cache to refresh, then retry
             await new Promise((r) => setTimeout(r, 2000));
             try {
               await saveClient(payload);
             } catch {
-              // Retry without brand fields as last resort
               await saveClient({
                 name: name.trim(),
                 brand_book_url: brandBookUrl || null,
@@ -267,7 +259,6 @@ export function ClientForm({ defaultValues, mode }: ClientFormProps) {
               return;
             }
           } else {
-            // Migration failed — save without brand fields
             await saveClient({
               name: name.trim(),
               brand_book_url: brandBookUrl || null,
@@ -295,7 +286,6 @@ export function ClientForm({ defaultValues, mode }: ClientFormProps) {
     }
   }
 
-  // Reusable asset upload section component
   function AssetUploadSection({
     label,
     description,
@@ -320,17 +310,17 @@ export function ClientForm({ defaultValues, mode }: ClientFormProps) {
     return (
       <div className="space-y-2">
         <Label className="flex items-center gap-1.5">
-          <Icon className="h-3.5 w-3.5 text-violet-500" />
+          <Icon className="h-3.5 w-3.5 text-violet-400" />
           {label}
         </Label>
-        <p className="text-xs text-gray-500">{description}</p>
+        <p className="text-xs text-muted-foreground">{description}</p>
 
         {urls.length > 0 && (
           <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
             {urls.map((url, i) => (
               <div
                 key={i}
-                className="group relative aspect-square overflow-hidden rounded-lg border"
+                className="group relative aspect-square overflow-hidden rounded-xl border border-border/50"
               >
                 <img
                   src={url}
@@ -351,17 +341,17 @@ export function ClientForm({ defaultValues, mode }: ClientFormProps) {
 
         <Label
           htmlFor={uploadId}
-          className="flex cursor-pointer flex-col items-center gap-2 rounded-lg border-2 border-dashed border-gray-300 p-4 text-center transition-colors hover:border-violet-400 hover:bg-violet-50/50"
+          className="flex cursor-pointer flex-col items-center gap-2 rounded-xl border-2 border-dashed border-border/50 p-4 text-center transition-colors hover:border-violet-500/30 hover:bg-violet-500/5"
         >
           {uploading ? (
-            <Loader2 className="h-5 w-5 animate-spin text-violet-500" />
+            <Loader2 className="h-5 w-5 animate-spin text-violet-400" />
           ) : (
-            <ImagePlus className="h-5 w-5 text-gray-400" />
+            <ImagePlus className="h-5 w-5 text-muted-foreground" />
           )}
-          <span className="text-sm font-medium text-gray-600">
+          <span className="text-sm font-medium text-muted-foreground">
             {uploading ? "Uploading..." : `Upload ${label.toLowerCase()}`}
           </span>
-          <span className="text-xs text-gray-400">
+          <span className="text-xs text-muted-foreground/50">
             PNG, JPG, SVG — select multiple files
           </span>
         </Label>
@@ -382,15 +372,16 @@ export function ClientForm({ defaultValues, mode }: ClientFormProps) {
     <form onSubmit={handleSubmit}>
       <div className="space-y-6">
         {/* Client Name & Brand Identity */}
-        <Card>
+        <Card className="border-border/50">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
-              <Eye className="h-4 w-4 text-violet-500" />
+              <div className="rounded-lg bg-violet-500/10 p-1.5">
+                <Eye className="h-3.5 w-3.5 text-violet-400" />
+              </div>
               Brand Identity
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-5">
-            {/* Client Name */}
             <div className="space-y-2">
               <Label htmlFor="name">Client Name *</Label>
               <Input
@@ -401,7 +392,6 @@ export function ClientForm({ defaultValues, mode }: ClientFormProps) {
               />
             </div>
 
-            {/* What the brand does */}
             <div className="space-y-2">
               <Label htmlFor="brand_description">What the Brand Does</Label>
               <Textarea
@@ -413,23 +403,21 @@ export function ClientForm({ defaultValues, mode }: ClientFormProps) {
               />
             </div>
 
-            {/* Who it's for */}
             <div className="space-y-2">
               <Label htmlFor="target_audience">Who It&apos;s For</Label>
               <Textarea
                 id="target_audience"
                 value={targetAudience}
                 onChange={(e) => setTargetAudience(e.target.value)}
-                placeholder="e.g. Urban millennials aged 25–35 who value sustainability and clean design..."
+                placeholder="e.g. Urban millennials aged 25-35 who value sustainability and clean design..."
                 rows={2}
               />
             </div>
 
-            {/* Visual Vibe */}
             <div className="space-y-2">
               <Label htmlFor="visual_vibe">
                 Visual Vibe{" "}
-                <span className="text-gray-400">(3–5 words)</span>
+                <span className="text-muted-foreground/50">(3-5 words)</span>
               </Label>
               <Input
                 id="visual_vibe"
@@ -442,16 +430,17 @@ export function ClientForm({ defaultValues, mode }: ClientFormProps) {
         </Card>
 
         {/* Colors */}
-        <Card>
+        <Card className="border-border/50">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
-              <Palette className="h-4 w-4 text-violet-500" />
+              <div className="rounded-lg bg-violet-500/10 p-1.5">
+                <Palette className="h-3.5 w-3.5 text-violet-400" />
+              </div>
               Colors
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-5">
             <div className="grid gap-4 sm:grid-cols-2">
-              {/* Primary Brand Color */}
               <div className="space-y-2">
                 <Label htmlFor="primary_color">Primary Brand Color</Label>
                 <div className="flex gap-2">
@@ -463,14 +452,13 @@ export function ClientForm({ defaultValues, mode }: ClientFormProps) {
                   />
                   {primaryColor && /^#[0-9a-fA-F]{6}$/.test(primaryColor.trim()) && (
                     <div
-                      className="h-10 w-10 shrink-0 rounded-md border"
+                      className="h-10 w-10 shrink-0 rounded-lg border border-border/50"
                       style={{ backgroundColor: primaryColor.trim() }}
                     />
                   )}
                 </div>
               </div>
 
-              {/* Secondary Brand Color */}
               <div className="space-y-2">
                 <Label htmlFor="secondary_color">Secondary Brand Color</Label>
                 <div className="flex gap-2">
@@ -482,7 +470,7 @@ export function ClientForm({ defaultValues, mode }: ClientFormProps) {
                   />
                   {secondaryColor && /^#[0-9a-fA-F]{6}$/.test(secondaryColor.trim()) && (
                     <div
-                      className="h-10 w-10 shrink-0 rounded-md border"
+                      className="h-10 w-10 shrink-0 rounded-lg border border-border/50"
                       style={{ backgroundColor: secondaryColor.trim() }}
                     />
                   )}
@@ -490,11 +478,10 @@ export function ClientForm({ defaultValues, mode }: ClientFormProps) {
               </div>
             </div>
 
-            {/* Other Brand Colors */}
             <div className="space-y-2">
               <Label htmlFor="other_colors">
                 Other Brand Colors{" "}
-                <span className="text-gray-400">(if applicable)</span>
+                <span className="text-muted-foreground/50">(if applicable)</span>
               </Label>
               <Input
                 id="other_colors"
@@ -504,7 +491,6 @@ export function ClientForm({ defaultValues, mode }: ClientFormProps) {
               />
             </div>
 
-            {/* Gradient Variations */}
             <div className="space-y-2">
               <Label htmlFor="gradient_variations">Gradient Variations</Label>
               <Textarea
@@ -519,16 +505,17 @@ export function ClientForm({ defaultValues, mode }: ClientFormProps) {
         </Card>
 
         {/* Fonts */}
-        <Card>
+        <Card className="border-border/50">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
-              <Type className="h-4 w-4 text-violet-500" />
+              <div className="rounded-lg bg-violet-500/10 p-1.5">
+                <Type className="h-3.5 w-3.5 text-violet-400" />
+              </div>
               Fonts
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-5">
             <div className="grid gap-4 sm:grid-cols-2">
-              {/* Heading Font */}
               <div className="space-y-2">
                 <Label htmlFor="heading_font">Heading Font</Label>
                 <Input
@@ -539,7 +526,6 @@ export function ClientForm({ defaultValues, mode }: ClientFormProps) {
                 />
               </div>
 
-              {/* Body Font */}
               <div className="space-y-2">
                 <Label htmlFor="body_font">Body Font</Label>
                 <Input
@@ -551,11 +537,10 @@ export function ClientForm({ defaultValues, mode }: ClientFormProps) {
               </div>
             </div>
 
-            {/* Style Font */}
             <div className="space-y-2">
               <Label htmlFor="style_font">
                 Style Font{" "}
-                <span className="text-gray-400">(if applicable)</span>
+                <span className="text-muted-foreground/50">(if applicable)</span>
               </Label>
               <Input
                 id="style_font"
@@ -568,15 +553,16 @@ export function ClientForm({ defaultValues, mode }: ClientFormProps) {
         </Card>
 
         {/* Visual Direction */}
-        <Card>
+        <Card className="border-border/50">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
-              <ShieldAlert className="h-4 w-4 text-violet-500" />
+              <div className="rounded-lg bg-violet-500/10 p-1.5">
+                <ShieldAlert className="h-3.5 w-3.5 text-violet-400" />
+              </div>
               Visual Direction &amp; Constraints
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-5">
-            {/* Imagery Style */}
             <div className="space-y-2">
               <Label htmlFor="imagery_style">Imagery Style</Label>
               <Textarea
@@ -588,7 +574,6 @@ export function ClientForm({ defaultValues, mode }: ClientFormProps) {
               />
             </div>
 
-            {/* What to Avoid */}
             <div className="space-y-2">
               <Label htmlFor="what_to_avoid">What to Avoid</Label>
               <Textarea
@@ -600,7 +585,6 @@ export function ClientForm({ defaultValues, mode }: ClientFormProps) {
               />
             </div>
 
-            {/* Do's & Don'ts */}
             <div className="space-y-2">
               <Label htmlFor="dos_and_donts">Do&apos;s &amp; Don&apos;ts</Label>
               <Textarea
@@ -615,10 +599,12 @@ export function ClientForm({ defaultValues, mode }: ClientFormProps) {
         </Card>
 
         {/* Brand Book & Assets */}
-        <Card>
+        <Card className="border-border/50">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
-              <FileText className="h-4 w-4 text-violet-500" />
+              <div className="rounded-lg bg-violet-500/10 p-1.5">
+                <FileText className="h-3.5 w-3.5 text-violet-400" />
+              </div>
               Brand Book &amp; Assets
             </CardTitle>
           </CardHeader>
@@ -626,22 +612,22 @@ export function ClientForm({ defaultValues, mode }: ClientFormProps) {
             {/* Brand Book Upload */}
             <div className="space-y-2">
               <Label>Brand Book</Label>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-muted-foreground">
                 Upload your brand guidelines document (PDF, DOC, or images)
               </p>
 
               {brandBookUrl ? (
-                <div className="flex items-center gap-3 rounded-lg border border-emerald-200 bg-emerald-50 p-3">
-                  <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-500" />
+                <div className="flex items-center gap-3 rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-3">
+                  <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-400" />
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-emerald-800">
+                    <p className="truncate text-sm font-medium text-emerald-300">
                       {brandBookName || "Brand book uploaded"}
                     </p>
                     <a
                       href={brandBookUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-xs text-emerald-600 underline"
+                      className="text-xs text-emerald-400/70 underline"
                     >
                       View file
                     </a>
@@ -661,19 +647,19 @@ export function ClientForm({ defaultValues, mode }: ClientFormProps) {
               ) : (
                 <Label
                   htmlFor="brandbook-upload"
-                  className="flex cursor-pointer flex-col items-center gap-2 rounded-lg border-2 border-dashed border-gray-300 p-8 text-center transition-colors hover:border-violet-400 hover:bg-violet-50/50"
+                  className="flex cursor-pointer flex-col items-center gap-2 rounded-xl border-2 border-dashed border-border/50 p-8 text-center transition-colors hover:border-violet-500/30 hover:bg-violet-500/5"
                 >
                   {uploadingBrandBook ? (
-                    <Loader2 className="h-8 w-8 animate-spin text-violet-500" />
+                    <Loader2 className="h-8 w-8 animate-spin text-violet-400" />
                   ) : (
-                    <FileText className="h-8 w-8 text-gray-400" />
+                    <FileText className="h-8 w-8 text-muted-foreground" />
                   )}
-                  <span className="text-sm font-medium text-gray-600">
+                  <span className="text-sm font-medium text-muted-foreground">
                     {uploadingBrandBook
                       ? "Uploading..."
                       : "Click to upload brand book"}
                   </span>
-                  <span className="text-xs text-gray-400">
+                  <span className="text-xs text-muted-foreground/50">
                     PDF, DOC, PNG, JPG up to 50MB
                   </span>
                 </Label>
@@ -688,9 +674,8 @@ export function ClientForm({ defaultValues, mode }: ClientFormProps) {
               />
             </div>
 
-            <Separator />
+            <Separator className="bg-border/30" />
 
-            {/* 1. Logos */}
             <AssetUploadSection
               label="Logos"
               description="Upload brand logos and logo variations"
@@ -705,9 +690,8 @@ export function ClientForm({ defaultValues, mode }: ClientFormProps) {
               onRemove={(i) => removeFromList(i, setLogos, setLogoNames)}
             />
 
-            <Separator />
+            <Separator className="bg-border/30" />
 
-            {/* 2. Creatives Reference */}
             <AssetUploadSection
               label="Creatives Reference"
               description="Upload existing creatives or design references for AI to match style"
@@ -722,9 +706,8 @@ export function ClientForm({ defaultValues, mode }: ClientFormProps) {
               onRemove={(i) => removeFromList(i, setCreativesRef, setCreativesRefNames)}
             />
 
-            <Separator />
+            <Separator className="bg-border/30" />
 
-            {/* 3. Landing Pages Reference */}
             <AssetUploadSection
               label="Landing Pages Reference"
               description="Upload landing page screenshots or mockups for visual consistency"
@@ -746,7 +729,7 @@ export function ClientForm({ defaultValues, mode }: ClientFormProps) {
           <Button
             type="submit"
             disabled={saving}
-            className="bg-violet-600 hover:bg-violet-700"
+            className="bg-violet-600 shadow-lg shadow-violet-500/20 hover:bg-violet-500"
           >
             {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {mode === "create" ? "Create Client" : "Save Changes"}
@@ -754,6 +737,7 @@ export function ClientForm({ defaultValues, mode }: ClientFormProps) {
           <Button
             type="button"
             variant="outline"
+            className="border-border/50"
             onClick={() => router.back()}
           >
             Cancel

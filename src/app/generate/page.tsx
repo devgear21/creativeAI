@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Spotlight } from "@/components/ui/spotlight";
 import { toast } from "sonner";
 import {
   Wand2,
@@ -30,6 +31,7 @@ import {
   Globe,
   X,
   Image as ImageIcon,
+  Zap,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import {
@@ -219,7 +221,6 @@ function GeneratePageContent() {
       toast.error(`Failed to upload ${label}`);
     } finally {
       setUploading(false);
-      // Reset input so same file can be re-selected
       e.target.value = "";
     }
   }
@@ -278,11 +279,11 @@ function GeneratePageContent() {
   function getStatusIcon(status: string) {
     switch (status) {
       case "completed":
-        return <CheckCircle2 className="h-4 w-4 text-emerald-500" />;
+        return <CheckCircle2 className="h-4 w-4 text-emerald-400" />;
       case "failed":
-        return <XCircle className="h-4 w-4 text-red-500" />;
+        return <XCircle className="h-4 w-4 text-red-400" />;
       default:
-        return <Loader2 className="h-4 w-4 animate-spin text-violet-500" />;
+        return <Loader2 className="h-4 w-4 animate-spin text-violet-400" />;
     }
   }
 
@@ -359,10 +360,10 @@ function GeneratePageContent() {
   }) {
     return (
       <div className="space-y-2">
-        <Label className="flex items-center gap-1.5">
-          <Icon className="h-3.5 w-3.5 text-violet-500" />
+        <Label className="flex items-center gap-1.5 text-muted-foreground">
+          <Icon className="h-3.5 w-3.5 text-violet-400" />
           {label}{" "}
-          <span className="text-gray-400 font-normal">(optional)</span>
+          <span className="text-muted-foreground/50">(optional)</span>
         </Label>
 
         {options.length > 0 && (
@@ -373,12 +374,12 @@ function GeneratePageContent() {
               return (
                 <div
                   key={url}
-                  className={`group relative aspect-square overflow-hidden rounded-lg border-2 transition-all ${
+                  className={`group relative aspect-square overflow-hidden rounded-xl border-2 transition-all ${
                     isSelected
-                      ? "border-violet-500 ring-2 ring-violet-200"
+                      ? "border-violet-500 ring-2 ring-violet-500/20"
                       : atLimit
-                        ? "cursor-not-allowed border-gray-100 opacity-40"
-                        : "cursor-pointer border-gray-200 hover:border-gray-300"
+                        ? "cursor-not-allowed border-border/30 opacity-40"
+                        : "cursor-pointer border-border/50 hover:border-border"
                   }`}
                   onClick={() => {
                     if (atLimit) return;
@@ -402,7 +403,6 @@ function GeneratePageContent() {
                       </div>
                     </div>
                   )}
-                  {/* Preview button */}
                   <button
                     type="button"
                     onClick={(e) => {
@@ -431,17 +431,16 @@ function GeneratePageContent() {
           </div>
         )}
 
-        {/* Upload new */}
         <label
           htmlFor={uploadId}
-          className="flex cursor-pointer items-center gap-2 rounded-lg border-2 border-dashed border-gray-300 p-3 text-center transition-colors hover:border-violet-400 hover:bg-violet-50/50"
+          className="flex cursor-pointer items-center gap-2 rounded-xl border-2 border-dashed border-border/50 p-3 text-center transition-colors hover:border-violet-500/30 hover:bg-violet-500/5"
         >
           {uploading ? (
-            <Loader2 className="h-4 w-4 animate-spin text-violet-500" />
+            <Loader2 className="h-4 w-4 animate-spin text-violet-400" />
           ) : (
-            <ImagePlus className="h-4 w-4 text-gray-400" />
+            <ImagePlus className="h-4 w-4 text-muted-foreground" />
           )}
-          <span className="text-xs font-medium text-gray-600">
+          <span className="text-xs font-medium text-muted-foreground">
             {uploading ? "Uploading..." : `Upload ${label.toLowerCase()}`}
           </span>
         </label>
@@ -456,7 +455,7 @@ function GeneratePageContent() {
         />
 
         {selected.length > 0 && (
-          <p className="text-xs text-violet-600">
+          <p className="text-xs text-violet-400">
             {selected.length} selected
           </p>
         )}
@@ -466,9 +465,14 @@ function GeneratePageContent() {
 
   return (
     <div>
+      {/* Page Header */}
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Generate Creative</h1>
-        <p className="text-sm text-gray-500">
+        <div className="flex items-center gap-2 text-xs font-medium text-violet-400 mb-1">
+          <Zap className="h-3.5 w-3.5" />
+          AI Generation
+        </div>
+        <h1 className="text-2xl font-bold text-foreground">Generate Creative</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
           Create AI-powered ad creatives for your clients
         </p>
       </div>
@@ -477,10 +481,12 @@ function GeneratePageContent() {
         {/* Form */}
         <form onSubmit={handleGenerate}>
           <div className="space-y-4">
-            <Card>
+            <Card className="border-border/50">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-base">
-                  <Sparkles className="h-4 w-4 text-violet-500" />
+                  <div className="rounded-lg bg-violet-500/10 p-1.5">
+                    <Sparkles className="h-3.5 w-3.5 text-violet-400" />
+                  </div>
                   Campaign Brief
                 </CardTitle>
               </CardHeader>
@@ -537,7 +543,7 @@ function GeneratePageContent() {
                 <div className="space-y-2">
                   <Label htmlFor="headline">
                     Headline{" "}
-                    <span className="text-gray-400">(optional)</span>
+                    <span className="text-muted-foreground/50">(optional)</span>
                   </Label>
                   <Input
                     id="headline"
@@ -550,7 +556,7 @@ function GeneratePageContent() {
                 <div className="space-y-2">
                   <Label htmlFor="ad_copy">
                     Ad Copy / Brief{" "}
-                    <span className="text-gray-400">(optional)</span>
+                    <span className="text-muted-foreground/50">(optional)</span>
                   </Label>
                   <Textarea
                     id="ad_copy"
@@ -612,8 +618,8 @@ function GeneratePageContent() {
                         size="sm"
                         className={
                           numVariations === n
-                            ? "bg-violet-600 hover:bg-violet-700"
-                            : ""
+                            ? "bg-violet-600 hover:bg-violet-500"
+                            : "border-border/50"
                         }
                         onClick={() => setNumVariations(n)}
                       >
@@ -627,11 +633,13 @@ function GeneratePageContent() {
 
             {/* Asset Selection Card */}
             {selectedClient && (
-              <Card>
+              <Card className="border-border/50">
                 <CardHeader>
                   <CardTitle className="flex items-center justify-between text-base">
                     <span className="flex items-center gap-2">
-                      <ImageIcon className="h-4 w-4 text-violet-500" />
+                      <div className="rounded-lg bg-violet-500/10 p-1.5">
+                        <ImageIcon className="h-3.5 w-3.5 text-violet-400" />
+                      </div>
                       Reference Assets
                     </span>
                     {totalSelected > 0 && (
@@ -642,7 +650,6 @@ function GeneratePageContent() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-5">
-                  {/* Logos */}
                   <AssetPickerSection
                     label="Logo"
                     icon={ImageIcon}
@@ -656,9 +663,8 @@ function GeneratePageContent() {
                     }
                   />
 
-                  <div className="border-t" />
+                  <div className="border-t border-border/30" />
 
-                  {/* Creative References */}
                   <AssetPickerSection
                     label="Creative Reference"
                     icon={ImagePlus}
@@ -672,9 +678,8 @@ function GeneratePageContent() {
                     }
                   />
 
-                  <div className="border-t" />
+                  <div className="border-t border-border/30" />
 
-                  {/* Landing Page References */}
                   <AssetPickerSection
                     label="Landing Page Reference"
                     icon={Globe}
@@ -694,7 +699,7 @@ function GeneratePageContent() {
             <Button
               type="submit"
               disabled={generating || results.some((r) => r.status !== "completed" && r.status !== "failed")}
-              className="w-full bg-violet-600 hover:bg-violet-700"
+              className="w-full bg-violet-600 shadow-lg shadow-violet-500/20 hover:bg-violet-500"
               size="lg"
             >
               {generating ? (
@@ -711,7 +716,7 @@ function GeneratePageContent() {
         <div className="space-y-4">
           {results.length > 0 && (
             <>
-              <Card>
+              <Card className="border-border/50">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base">Generation Status</CardTitle>
                 </CardHeader>
@@ -720,7 +725,7 @@ function GeneratePageContent() {
                     {results.map((result, i) => (
                       <div
                         key={result.creativeId}
-                        className="flex items-center justify-between rounded-lg border p-3"
+                        className="flex items-center justify-between rounded-xl border border-border/50 bg-muted/30 p-3"
                       >
                         <div className="flex items-center gap-2">
                           {getStatusIcon(result.status)}
@@ -738,7 +743,7 @@ function GeneratePageContent() {
                           }
                           className={
                             result.status === "completed"
-                              ? "bg-emerald-100 text-emerald-700"
+                              ? "bg-emerald-500/15 text-emerald-400"
                               : ""
                           }
                         >
@@ -753,7 +758,7 @@ function GeneratePageContent() {
               {/* Generated Images */}
               <div className="grid gap-4 sm:grid-cols-2">
                 {results.map((result, i) => (
-                  <Card key={result.creativeId} className="overflow-hidden">
+                  <Card key={result.creativeId} className="overflow-hidden border-border/50">
                     {result.status === "completed" && result.image_url ? (
                       <>
                         <div className="relative aspect-square">
@@ -774,7 +779,7 @@ function GeneratePageContent() {
                             <Button
                               variant="outline"
                               size="sm"
-                              className="w-full"
+                              className="w-full border-border/50"
                             >
                               <Download className="mr-2 h-3.5 w-3.5" />
                               Download
@@ -784,15 +789,15 @@ function GeneratePageContent() {
                       </>
                     ) : result.status === "failed" ? (
                       <CardContent className="flex aspect-square flex-col items-center justify-center">
-                        <XCircle className="mb-2 h-8 w-8 text-red-300" />
-                        <p className="text-sm text-red-500">
+                        <XCircle className="mb-2 h-8 w-8 text-red-400/50" />
+                        <p className="text-sm text-red-400">
                           Generation failed
                         </p>
                       </CardContent>
                     ) : (
                       <CardContent className="flex aspect-square flex-col items-center justify-center">
-                        <Loader2 className="mb-2 h-8 w-8 animate-spin text-violet-400" />
-                        <p className="text-sm text-gray-500">
+                        <Loader2 className="mb-2 h-8 w-8 animate-spin text-violet-400/50" />
+                        <p className="text-sm text-muted-foreground">
                           {getStatusLabel(result.status)}
                         </p>
                       </CardContent>
@@ -803,14 +808,14 @@ function GeneratePageContent() {
 
               {/* Prompt Used */}
               {promptUsed && (
-                <Card>
+                <Card className="border-border/50">
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-xs font-medium text-gray-500">
+                    <CardTitle className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                       Prompt Used
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-xs leading-relaxed text-gray-600">
+                    <p className="text-xs leading-relaxed text-muted-foreground">
                       {promptUsed}
                     </p>
                   </CardContent>
@@ -820,15 +825,19 @@ function GeneratePageContent() {
           )}
 
           {results.length === 0 && (
-            <Card>
+            <Card className="border-border/50 overflow-hidden">
+              <Spotlight
+                className="from-violet-400/10 via-violet-500/5 to-transparent"
+                size={250}
+              />
               <CardContent className="flex flex-col items-center justify-center py-16">
-                <div className="mb-4 rounded-full bg-violet-100 p-4">
-                  <Wand2 className="h-8 w-8 text-violet-500" />
+                <div className="mb-4 rounded-2xl bg-gradient-to-br from-violet-500/20 to-violet-600/10 p-5">
+                  <Wand2 className="h-8 w-8 text-violet-400" />
                 </div>
-                <h3 className="mb-1 font-medium text-gray-900">
+                <h3 className="mb-1 font-semibold text-foreground">
                   Ready to create
                 </h3>
-                <p className="text-center text-sm text-gray-500">
+                <p className="text-center text-sm text-muted-foreground">
                   Fill in the brief and hit Generate to create
                   <br />
                   AI-powered ad creatives
@@ -842,7 +851,7 @@ function GeneratePageContent() {
       {/* Image Preview Modal */}
       {previewUrl && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm"
           onClick={() => setPreviewUrl(null)}
         >
           <div
@@ -851,14 +860,14 @@ function GeneratePageContent() {
           >
             <button
               onClick={() => setPreviewUrl(null)}
-              className="absolute -right-3 -top-3 z-10 rounded-full bg-white p-1.5 shadow-lg transition-colors hover:bg-gray-100"
+              className="absolute -right-3 -top-3 z-10 rounded-full bg-card p-1.5 shadow-lg transition-colors hover:bg-muted"
             >
-              <X className="h-4 w-4 text-gray-700" />
+              <X className="h-4 w-4 text-foreground" />
             </button>
             <img
               src={previewUrl}
               alt="Preview"
-              className="max-h-[85vh] max-w-[85vw] rounded-lg object-contain shadow-2xl"
+              className="max-h-[85vh] max-w-[85vw] rounded-xl object-contain shadow-2xl"
             />
           </div>
         </div>

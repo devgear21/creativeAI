@@ -18,7 +18,8 @@
       "Bash(npx shadcn@latest add button card input label textarea select badge dialog separator skeleton tabs sonner avatar table dropdown-menu --yes)",
       "Bash(npx next build)",
       "Bash(node node_modules/next/dist/bin/next build)",
-      "Bash(npx tsc --noEmit)"
+      "Bash(npx tsc --noEmit)",
+      "Bash(npm install @splinetool/runtime @splinetool/react-spline framer-motion)"
     ]
   }
 }

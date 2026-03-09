@@ -27,6 +27,7 @@ import {
   Eye,
   ShieldAlert,
   Trash2,
+  ArrowLeft,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
@@ -42,10 +43,10 @@ function DetailRow({
   if (!value) return null;
   return (
     <div className="space-y-1">
-      <p className="text-xs font-medium uppercase tracking-wider text-gray-400">
+      <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground/60">
         {label}
       </p>
-      <p className="text-sm text-gray-700 whitespace-pre-line">{value}</p>
+      <p className="text-sm text-foreground/80 whitespace-pre-line">{value}</p>
     </div>
   );
 }
@@ -63,13 +64,13 @@ function ColorSwatch({
     <div className="flex items-center gap-3">
       {isHex && (
         <div
-          className="h-8 w-8 shrink-0 rounded-md border shadow-sm"
+          className="h-8 w-8 shrink-0 rounded-lg border border-border/50 shadow-sm"
           style={{ backgroundColor: value.trim() }}
         />
       )}
       <div>
-        <p className="text-xs font-medium text-gray-400">{label}</p>
-        <p className="text-sm text-gray-700">{value}</p>
+        <p className="text-xs font-medium text-muted-foreground/60">{label}</p>
+        <p className="text-sm text-foreground/80">{value}</p>
       </div>
     </div>
   );
@@ -131,13 +132,13 @@ export default function ClientDetailPage() {
     return (
       <div className="space-y-6">
         <Skeleton className="h-10 w-64" />
-        <Skeleton className="h-48 w-full" />
+        <Skeleton className="h-48 w-full rounded-xl" />
       </div>
     );
   }
 
   if (!client) {
-    return <p className="text-gray-500">Client not found.</p>;
+    return <p className="text-muted-foreground">Client not found.</p>;
   }
 
   const firstLogo = client.assets_data?.logos?.[0];
@@ -156,6 +157,12 @@ export default function ClientDetailPage() {
 
   return (
     <div className="space-y-6">
+      {/* Back Link */}
+      <Link href="/clients" className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors">
+        <ArrowLeft className="h-3.5 w-3.5" />
+        Back to Clients
+      </Link>
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
@@ -163,17 +170,17 @@ export default function ClientDetailPage() {
             <img
               src={firstLogo}
               alt={client.name}
-              className="h-14 w-14 rounded-xl border object-contain"
+              className="h-14 w-14 rounded-xl border border-border/50 object-contain"
             />
           ) : (
-            <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-violet-600 text-xl font-bold text-white">
+            <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-violet-700 text-xl font-bold text-white shadow-lg shadow-violet-500/20">
               {client.name.charAt(0)}
             </div>
           )}
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">{client.name}</h1>
+            <h1 className="text-2xl font-bold text-foreground">{client.name}</h1>
             {client.industry && (
-              <p className="text-sm text-gray-500">{client.industry}</p>
+              <p className="text-sm text-muted-foreground">{client.industry}</p>
             )}
           </div>
         </div>
@@ -181,20 +188,20 @@ export default function ClientDetailPage() {
           <Button
             variant="outline"
             size="sm"
-            className="text-red-600 hover:bg-red-50 hover:text-red-700"
+            className="border-border/50 text-red-400 hover:bg-red-500/10 hover:text-red-300"
             onClick={() => setShowDeleteDialog(true)}
           >
             <Trash2 className="mr-2 h-3.5 w-3.5" />
             Delete
           </Button>
           <Link href={`/clients/${id}/edit`}>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" className="border-border/50">
               <Pencil className="mr-2 h-3.5 w-3.5" />
               Edit
             </Button>
           </Link>
           <Link href={`/generate?client=${id}`}>
-            <Button size="sm" className="bg-violet-600 hover:bg-violet-700">
+            <Button size="sm" className="bg-violet-600 hover:bg-violet-500">
               <Wand2 className="mr-2 h-3.5 w-3.5" />
               Generate Creative
             </Button>
@@ -204,10 +211,12 @@ export default function ClientDetailPage() {
 
       {/* Brand Identity */}
       {hasBrandIdentity && (
-        <Card>
+        <Card className="border-border/50">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
-              <Eye className="h-4 w-4 text-violet-500" />
+              <div className="rounded-lg bg-violet-500/10 p-1.5">
+                <Eye className="h-3.5 w-3.5 text-violet-400" />
+              </div>
               Brand Identity
             </CardTitle>
           </CardHeader>
@@ -216,7 +225,7 @@ export default function ClientDetailPage() {
             <DetailRow label="Who It's For" value={client.target_audience} />
             {client.visual_vibe && (
               <div className="space-y-1">
-                <p className="text-xs font-medium uppercase tracking-wider text-gray-400">
+                <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground/60">
                   Visual Vibe
                 </p>
                 <div className="flex flex-wrap gap-1.5">
@@ -234,10 +243,12 @@ export default function ClientDetailPage() {
 
       {/* Colors */}
       {hasColors && (
-        <Card>
+        <Card className="border-border/50">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
-              <Palette className="h-4 w-4 text-violet-500" />
+              <div className="rounded-lg bg-violet-500/10 p-1.5">
+                <Palette className="h-3.5 w-3.5 text-violet-400" />
+              </div>
               Colors
             </CardTitle>
           </CardHeader>
@@ -254,10 +265,12 @@ export default function ClientDetailPage() {
 
       {/* Fonts */}
       {hasFonts && (
-        <Card>
+        <Card className="border-border/50">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
-              <Type className="h-4 w-4 text-violet-500" />
+              <div className="rounded-lg bg-violet-500/10 p-1.5">
+                <Type className="h-3.5 w-3.5 text-violet-400" />
+              </div>
               Fonts
             </CardTitle>
           </CardHeader>
@@ -273,10 +286,12 @@ export default function ClientDetailPage() {
 
       {/* Visual Direction */}
       {hasVisualDirection && (
-        <Card>
+        <Card className="border-border/50">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
-              <ShieldAlert className="h-4 w-4 text-violet-500" />
+              <div className="rounded-lg bg-violet-500/10 p-1.5">
+                <ShieldAlert className="h-3.5 w-3.5 text-violet-400" />
+              </div>
               Visual Direction &amp; Constraints
             </CardTitle>
           </CardHeader>
@@ -289,10 +304,12 @@ export default function ClientDetailPage() {
       )}
 
       {/* Brand Book */}
-      <Card>
+      <Card className="border-border/50">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
-            <FileText className="h-4 w-4 text-violet-500" />
+            <div className="rounded-lg bg-violet-500/10 p-1.5">
+              <FileText className="h-3.5 w-3.5 text-violet-400" />
+            </div>
             Brand Book
           </CardTitle>
         </CardHeader>
@@ -302,44 +319,45 @@ export default function ClientDetailPage() {
               href={client.brand_book_url}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-3 rounded-lg border p-4 transition-colors hover:bg-gray-50"
+              className="flex items-center gap-3 rounded-xl border border-border/50 p-4 transition-colors hover:bg-muted/30"
             >
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-violet-100">
-                <FileText className="h-5 w-5 text-violet-600" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-violet-500/10">
+                <FileText className="h-5 w-5 text-violet-400" />
               </div>
               <div className="flex-1">
-                <p className="text-sm font-medium text-gray-900">
+                <p className="text-sm font-medium text-foreground">
                   Brand Guidelines Document
                 </p>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-muted-foreground">
                   Click to view or download
                 </p>
               </div>
-              <ExternalLink className="h-4 w-4 text-gray-400" />
+              <ExternalLink className="h-4 w-4 text-muted-foreground" />
             </a>
           ) : (
-            <p className="text-sm text-gray-400">No brand book uploaded.</p>
+            <p className="text-sm text-muted-foreground/50">No brand book uploaded.</p>
           )}
         </CardContent>
       </Card>
 
-      {/* Assets — 3 Categories */}
+      {/* Assets */}
       {(client.assets_data?.logos?.length || client.assets_data?.creatives_reference?.length || client.assets_data?.landing_pages_reference?.length) ? (
-        <Card>
+        <Card className="border-border/50">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
-              <ImageIcon className="h-4 w-4 text-violet-500" />
+              <div className="rounded-lg bg-violet-500/10 p-1.5">
+                <ImageIcon className="h-3.5 w-3.5 text-violet-400" />
+              </div>
               Assets
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
-            {/* Logos */}
             {client.assets_data?.logos && client.assets_data.logos.length > 0 && (
               <div>
-                <p className="mb-2 text-xs font-medium uppercase tracking-wider text-gray-400">Logos ({client.assets_data.logos.length})</p>
+                <p className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground/60">Logos ({client.assets_data.logos.length})</p>
                 <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-6">
                   {client.assets_data.logos.map((url, i) => (
-                    <a key={i} href={url} target="_blank" rel="noopener noreferrer" className="group relative aspect-square overflow-hidden rounded-lg border transition-shadow hover:shadow-md">
+                    <a key={i} href={url} target="_blank" rel="noopener noreferrer" className="group relative aspect-square overflow-hidden rounded-xl border border-border/50 transition-all hover:shadow-lg hover:shadow-violet-500/5">
                       <img src={url} alt={`Logo ${i + 1}`} className="h-full w-full object-cover transition-transform group-hover:scale-105" />
                     </a>
                   ))}
@@ -347,13 +365,12 @@ export default function ClientDetailPage() {
               </div>
             )}
 
-            {/* Creatives Reference */}
             {client.assets_data?.creatives_reference && client.assets_data.creatives_reference.length > 0 && (
               <div>
-                <p className="mb-2 text-xs font-medium uppercase tracking-wider text-gray-400">Creatives Reference ({client.assets_data.creatives_reference.length})</p>
+                <p className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground/60">Creatives Reference ({client.assets_data.creatives_reference.length})</p>
                 <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-6">
                   {client.assets_data.creatives_reference.map((url, i) => (
-                    <a key={i} href={url} target="_blank" rel="noopener noreferrer" className="group relative aspect-square overflow-hidden rounded-lg border transition-shadow hover:shadow-md">
+                    <a key={i} href={url} target="_blank" rel="noopener noreferrer" className="group relative aspect-square overflow-hidden rounded-xl border border-border/50 transition-all hover:shadow-lg hover:shadow-violet-500/5">
                       <img src={url} alt={`Creative ref ${i + 1}`} className="h-full w-full object-cover transition-transform group-hover:scale-105" />
                     </a>
                   ))}
@@ -361,13 +378,12 @@ export default function ClientDetailPage() {
               </div>
             )}
 
-            {/* Landing Pages Reference */}
             {client.assets_data?.landing_pages_reference && client.assets_data.landing_pages_reference.length > 0 && (
               <div>
-                <p className="mb-2 text-xs font-medium uppercase tracking-wider text-gray-400">Landing Pages Reference ({client.assets_data.landing_pages_reference.length})</p>
+                <p className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground/60">Landing Pages Reference ({client.assets_data.landing_pages_reference.length})</p>
                 <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-6">
                   {client.assets_data.landing_pages_reference.map((url, i) => (
-                    <a key={i} href={url} target="_blank" rel="noopener noreferrer" className="group relative aspect-square overflow-hidden rounded-lg border transition-shadow hover:shadow-md">
+                    <a key={i} href={url} target="_blank" rel="noopener noreferrer" className="group relative aspect-square overflow-hidden rounded-xl border border-border/50 transition-all hover:shadow-lg hover:shadow-violet-500/5">
                       <img src={url} alt={`Landing page ref ${i + 1}`} className="h-full w-full object-cover transition-transform group-hover:scale-105" />
                     </a>
                   ))}
@@ -378,29 +394,29 @@ export default function ClientDetailPage() {
         </Card>
       ) : null}
 
-      <Separator />
+      <Separator className="bg-border/30" />
 
       {/* Campaigns */}
       <div>
-        <h2 className="mb-4 text-lg font-semibold text-gray-900">
+        <h2 className="mb-4 text-lg font-semibold text-foreground">
           Campaigns ({campaigns.length})
         </h2>
         {campaigns.length === 0 ? (
-          <p className="text-sm text-gray-400">No campaigns yet.</p>
+          <p className="text-sm text-muted-foreground/50">No campaigns yet.</p>
         ) : (
           <div className="space-y-2">
             {campaigns.map((campaign) => (
-              <Card key={campaign.id}>
+              <Card key={campaign.id} className="border-border/50">
                 <CardContent className="flex items-center justify-between p-4">
                   <div>
-                    <p className="font-medium text-gray-900">
+                    <p className="font-medium text-foreground">
                       {campaign.headline}
                     </p>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-muted-foreground">
                       {campaign.platform} &middot; {campaign.aspect_ratio}
                     </p>
                   </div>
-                  <Badge variant="outline" className="capitalize">
+                  <Badge variant="outline" className="capitalize border-border/50">
                     {campaign.platform}
                   </Badge>
                 </CardContent>
@@ -413,14 +429,14 @@ export default function ClientDetailPage() {
       {/* Creatives */}
       {creatives.length > 0 && (
         <>
-          <Separator />
+          <Separator className="bg-border/30" />
           <div>
-            <h2 className="mb-4 text-lg font-semibold text-gray-900">
+            <h2 className="mb-4 text-lg font-semibold text-foreground">
               Recent Creatives
             </h2>
             <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
               {creatives.map((creative) => (
-                <Card key={creative.id} className="overflow-hidden">
+                <Card key={creative.id} className="overflow-hidden border-border/50">
                   <div className="relative aspect-square">
                     <Image
                       src={creative.image_url!}
@@ -438,7 +454,7 @@ export default function ClientDetailPage() {
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md border-border/50">
           <DialogHeader>
             <DialogTitle>Delete Client</DialogTitle>
             <DialogDescription>
@@ -452,6 +468,7 @@ export default function ClientDetailPage() {
               variant="outline"
               onClick={() => setShowDeleteDialog(false)}
               disabled={deleting}
+              className="border-border/50"
             >
               Cancel
             </Button>

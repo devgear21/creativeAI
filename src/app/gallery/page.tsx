@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Download, Image as ImageIcon, Loader2, Maximize2, Trash2 } from "lucide-react";
+import { Download, Image as ImageIcon, Loader2, Maximize2, Trash2, Grid3X3 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -33,18 +33,15 @@ export default function GalleryPage() {
   const [filterClient, setFilterClient] = useState("all");
   const [selectedCreative, setSelectedCreative] = useState<Creative | null>(null);
 
-  // Child creatives (resized versions) for the selected creative
   const [childCreatives, setChildCreatives] = useState<Creative[]>([]);
   const [loadingChildren, setLoadingChildren] = useState(false);
 
-  // Resize state
   const [resizeRatio, setResizeRatio] = useState<AspectRatio | "">("");
   const [resizing, setResizing] = useState(false);
   const [resizeTaskId, setResizeTaskId] = useState<string | null>(null);
   const [resizeCreativeId, setResizeCreativeId] = useState<string | null>(null);
   const resizePollingRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Delete state
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
@@ -54,7 +51,6 @@ export default function GalleryPage() {
     try {
       const supabase = createClient();
 
-      // Delete from storage if image exists
       if (selectedCreative.image_url) {
         const url = new URL(selectedCreative.image_url);
         const pathParts = url.pathname.split("/creatives/");
@@ -63,11 +59,9 @@ export default function GalleryPage() {
         }
       }
 
-      // Delete from DB
       const { error } = await supabase.from("creatives").delete().eq("id", selectedCreative.id);
       if (error) throw error;
 
-      // Update local state
       setCreatives((prev) => prev.filter((c) => c.id !== selectedCreative.id));
       setSelectedCreative(null);
       setConfirmDelete(false);
@@ -100,7 +94,6 @@ export default function GalleryPage() {
     load();
   }, []);
 
-  // Load child creatives when a creative is selected
   useEffect(() => {
     if (!selectedCreative) {
       setChildCreatives([]);
@@ -122,7 +115,6 @@ export default function GalleryPage() {
     loadChildren();
   }, [selectedCreative]);
 
-  // Resize polling
   const pollResize = useCallback(async () => {
     if (!resizeTaskId || !resizeCreativeId) return;
     try {
@@ -137,7 +129,6 @@ export default function GalleryPage() {
         setResizeCreativeId(null);
         setResizeRatio("");
         toast.success("Creative resized successfully!");
-        // Refresh child creatives to show the newly resized version
         if (selectedCreative) {
           const supabase = createClient();
           const { data: children } = await supabase
@@ -202,13 +193,17 @@ export default function GalleryPage() {
     <div>
       <div className="mb-8 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Gallery</h1>
-          <p className="text-sm text-gray-500">
+          <div className="mb-1 flex items-center gap-2 text-xs font-medium text-violet-400">
+            <Grid3X3 className="h-3.5 w-3.5" />
+            Creative Library
+          </div>
+          <h1 className="text-2xl font-bold text-foreground">Gallery</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
             All generated creatives ({filtered.length})
           </p>
         </div>
         <Select value={filterClient} onValueChange={setFilterClient}>
-          <SelectTrigger className="w-48">
+          <SelectTrigger className="w-48 border-border/50">
             <SelectValue placeholder="Filter by client" />
           </SelectTrigger>
           <SelectContent>
@@ -225,14 +220,16 @@ export default function GalleryPage() {
       {loading ? (
         <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
           {Array.from({ length: 8 }).map((_, i) => (
-            <Skeleton key={i} className="aspect-square rounded-lg" />
+            <Skeleton key={i} className="aspect-square rounded-xl" />
           ))}
         </div>
       ) : filtered.length === 0 ? (
-        <Card>
+        <Card className="border-dashed border-border/50">
           <CardContent className="flex flex-col items-center justify-center py-16">
-            <ImageIcon className="mb-3 h-10 w-10 text-gray-300" />
-            <p className="text-sm text-gray-500">No creatives found</p>
+            <div className="mb-4 rounded-2xl bg-muted/50 p-4">
+              <ImageIcon className="h-8 w-8 text-muted-foreground/50" />
+            </div>
+            <p className="text-sm font-medium text-muted-foreground">No creatives found</p>
           </CardContent>
         </Card>
       ) : (
@@ -240,7 +237,7 @@ export default function GalleryPage() {
           {filtered.map((creative) => (
             <Card
               key={creative.id}
-              className="group cursor-pointer overflow-hidden transition-shadow hover:shadow-md"
+              className="group cursor-pointer overflow-hidden border-border/50 transition-all duration-300 hover:border-border hover:shadow-xl hover:shadow-violet-500/5"
               onClick={() => setSelectedCreative(creative)}
             >
               <div className="relative aspect-square">
@@ -248,14 +245,15 @@ export default function GalleryPage() {
                   src={creative.image_url!}
                   alt="Creative"
                   fill
-                  className="object-cover transition-transform group-hover:scale-105"
+                  className="object-cover transition-transform duration-500 group-hover:scale-110"
                 />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
               </div>
               <CardContent className="p-3">
-                <p className="truncate text-sm font-medium text-gray-900">
+                <p className="truncate text-sm font-medium text-foreground">
                   {(creative.client as unknown as { name: string })?.name}
                 </p>
-                <p className="text-xs text-gray-400">
+                <p className="text-xs text-muted-foreground">
                   {format(new Date(creative.created_at), "MMM d, yyyy")}
                 </p>
               </CardContent>
@@ -275,7 +273,7 @@ export default function GalleryPage() {
           }
         }}
       >
-        <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
+        <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto border-border/50">
           <DialogHeader>
             <DialogTitle className="flex items-center justify-between">
               <span>
@@ -283,7 +281,7 @@ export default function GalleryPage() {
               </span>
               <div className="flex items-center gap-2">
                 {selectedCreative?.aspect_ratio && (
-                  <Badge variant="outline" className="text-xs">
+                  <Badge variant="outline" className="text-xs border-border/50">
                     {selectedCreative.aspect_ratio}
                   </Badge>
                 )}
@@ -298,7 +296,7 @@ export default function GalleryPage() {
 
           {selectedCreative?.image_url && (
             <div className="space-y-4">
-              <div className="relative aspect-square w-full overflow-hidden rounded-lg">
+              <div className="relative aspect-square w-full overflow-hidden rounded-xl">
                 <Image
                   src={selectedCreative.image_url}
                   alt="Creative full size"
@@ -308,24 +306,24 @@ export default function GalleryPage() {
               </div>
 
               {/* Resized Versions */}
-              <div className="rounded-lg border border-gray-200 p-3">
-                <p className="mb-2 text-xs font-medium uppercase tracking-wider text-gray-500">
+              <div className="rounded-xl border border-border/50 bg-muted/20 p-3">
+                <p className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
                   Resized Versions
                 </p>
                 {loadingChildren ? (
                   <div className="flex items-center gap-2 py-2">
-                    <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
-                    <span className="text-xs text-gray-400">Loading...</span>
+                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                    <span className="text-xs text-muted-foreground">Loading...</span>
                   </div>
                 ) : childCreatives.length === 0 ? (
-                  <p className="text-xs text-gray-400 py-1">
-                    No resized versions yet. Use the resize option below to generate different sizes.
+                  <p className="py-1 text-xs text-muted-foreground/70">
+                    No resized versions yet. Use the resize option below.
                   </p>
                 ) : (
                   <div className="flex gap-3 overflow-x-auto pb-1">
                     {childCreatives.map((child) => (
-                      <div key={child.id} className="flex flex-col items-center gap-1 shrink-0">
-                        <div className="relative h-20 w-20 overflow-hidden rounded-md border">
+                      <div key={child.id} className="flex shrink-0 flex-col items-center gap-1">
+                        <div className="relative h-20 w-20 overflow-hidden rounded-lg border border-border/50">
                           <Image
                             src={child.image_url!}
                             alt={`Resized ${child.aspect_ratio}`}
@@ -333,8 +331,8 @@ export default function GalleryPage() {
                             className="object-cover"
                           />
                         </div>
-                        <Badge variant="outline" className="text-[10px]">
-                          {child.aspect_ratio || "—"}
+                        <Badge variant="outline" className="border-border/50 text-[10px]">
+                          {child.aspect_ratio || "-"}
                         </Badge>
                         <a
                           href={child.image_url!}
@@ -355,13 +353,13 @@ export default function GalleryPage() {
               </div>
 
               {/* Resize Option */}
-              <div className="flex items-center gap-3 rounded-lg border border-dashed border-gray-300 p-3">
-                <Maximize2 className="h-4 w-4 shrink-0 text-gray-500" />
+              <div className="flex items-center gap-3 rounded-xl border border-dashed border-border/50 p-3">
+                <Maximize2 className="h-4 w-4 shrink-0 text-muted-foreground" />
                 <Select
                   value={resizeRatio}
                   onValueChange={(v) => setResizeRatio(v as AspectRatio)}
                 >
-                  <SelectTrigger className="h-9 flex-1">
+                  <SelectTrigger className="h-9 flex-1 border-border/50">
                     <SelectValue placeholder="Resize to aspect ratio..." />
                   </SelectTrigger>
                   <SelectContent>
@@ -376,7 +374,7 @@ export default function GalleryPage() {
                   size="sm"
                   disabled={!resizeRatio || resizing}
                   onClick={handleResize}
-                  className="bg-violet-600 hover:bg-violet-700"
+                  className="bg-violet-600 hover:bg-violet-500"
                 >
                   {resizing ? (
                     <>
@@ -390,13 +388,13 @@ export default function GalleryPage() {
               </div>
 
               <div className="flex items-center justify-between">
-                <p className="text-xs text-gray-400">
+                <p className="text-xs text-muted-foreground">
                   {format(new Date(selectedCreative.created_at), "MMMM d, yyyy 'at' h:mm a")}
                 </p>
                 <div className="flex items-center gap-2">
                   {confirmDelete ? (
-                    <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-1.5">
-                      <span className="text-xs text-red-600">Delete this creative?</span>
+                    <div className="flex items-center gap-2 rounded-xl border border-red-500/20 bg-red-500/10 px-3 py-1.5">
+                      <span className="text-xs text-red-400">Delete?</span>
                       <Button
                         variant="destructive"
                         size="sm"
@@ -404,13 +402,13 @@ export default function GalleryPage() {
                         onClick={handleDeleteCreative}
                         className="h-7 px-2 text-xs"
                       >
-                        {deleting ? <Loader2 className="h-3 w-3 animate-spin" /> : "Yes, Delete"}
+                        {deleting ? <Loader2 className="h-3 w-3 animate-spin" /> : "Yes"}
                       </Button>
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => setConfirmDelete(false)}
-                        className="h-7 px-2 text-xs"
+                        className="h-7 border-border/50 px-2 text-xs"
                       >
                         Cancel
                       </Button>
@@ -420,7 +418,7 @@ export default function GalleryPage() {
                       variant="outline"
                       size="sm"
                       onClick={() => setConfirmDelete(true)}
-                      className="text-red-500 hover:bg-red-50 hover:text-red-600"
+                      className="border-border/50 text-red-400 hover:bg-red-500/10 hover:text-red-300"
                     >
                       <Trash2 className="mr-2 h-3.5 w-3.5" />
                       Delete
@@ -432,7 +430,7 @@ export default function GalleryPage() {
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    <Button variant="outline" size="sm">
+                    <Button variant="outline" size="sm" className="border-border/50">
                       <Download className="mr-2 h-3.5 w-3.5" />
                       Download
                     </Button>
@@ -441,11 +439,9 @@ export default function GalleryPage() {
               </div>
 
               {selectedCreative.prompt_used && (
-                <div className="rounded-lg bg-gray-50 p-3">
-                  <p className="mb-1 text-xs font-medium text-gray-500">
-                    Prompt
-                  </p>
-                  <p className="text-xs leading-relaxed text-gray-600">
+                <div className="rounded-xl bg-muted/30 p-3">
+                  <p className="mb-1 text-xs font-medium text-muted-foreground">Prompt</p>
+                  <p className="text-xs leading-relaxed text-muted-foreground/80">
                     {selectedCreative.prompt_used}
                   </p>
                 </div>
