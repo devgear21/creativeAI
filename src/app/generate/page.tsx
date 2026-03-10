@@ -524,27 +524,27 @@ function GeneratePageContent() {
                   {selectedClient && (
                     <div className="flex flex-wrap gap-1 pt-1">
                       {selectedClient.visual_vibe && (
-                        <Badge variant="secondary" className="text-xs">
+                        <Badge variant="secondary" className="max-w-[200px] truncate text-xs" title={selectedClient.visual_vibe}>
                           {selectedClient.visual_vibe}
                         </Badge>
                       )}
                       {selectedClient.primary_color && (
-                        <Badge variant="secondary" className="text-xs">
+                        <Badge variant="secondary" className="max-w-[120px] truncate text-xs" title={selectedClient.primary_color}>
                           {selectedClient.primary_color}
                         </Badge>
                       )}
                       {selectedClient.heading_font && (
-                        <Badge variant="secondary" className="text-xs">
+                        <Badge variant="secondary" className="max-w-[120px] truncate text-xs" title={selectedClient.heading_font}>
                           {selectedClient.heading_font}
                         </Badge>
                       )}
                       {selectedClient.tone_of_voice && (
-                        <Badge variant="secondary" className="text-xs">
+                        <Badge variant="secondary" className="max-w-[160px] truncate text-xs" title={selectedClient.tone_of_voice}>
                           {selectedClient.tone_of_voice}
                         </Badge>
                       )}
                       {selectedClient.industry && (
-                        <Badge variant="secondary" className="text-xs">
+                        <Badge variant="secondary" className="max-w-[120px] truncate text-xs" title={selectedClient.industry}>
                           {selectedClient.industry}
                         </Badge>
                       )}
