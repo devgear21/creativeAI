@@ -128,6 +128,13 @@ function buildConstraintsSection(client: Client): string[] {
   return parts;
 }
 
+function buildCreativeDirectionSection(creativeDirection?: string): string[] {
+  if (!creativeDirection || !creativeDirection.trim()) return [];
+  return [
+    `CREATIVE DIRECTION: ${creativeDirection.trim()}. Follow this reference/direction closely when designing the ad — adapt the visual style, layout approach, or UI patterns described above into the brand's creative.`
+  ];
+}
+
 function buildCommonSections(client: Client, platform: Platform): string[] {
   return [
     ...buildBrandSection(client),
@@ -277,7 +284,8 @@ export function buildProductTextPrompt(
   platform: Platform,
   assetContext?: AssetContext,
   headlinePosition?: TextPosition,
-  adCopyPosition?: TextPosition
+  adCopyPosition?: TextPosition,
+  creativeDirection?: string
 ): string {
   const parts: string[] = [...buildCommonSections(client, platform)];
 
@@ -302,6 +310,9 @@ export function buildProductTextPrompt(
   // Product-based reference handling
   parts.push(...buildProductReferenceSection(client, assetContext));
 
+  // Creative direction
+  parts.push(...buildCreativeDirectionSection(creativeDirection));
+
   // Closing
   parts.push(
     "High quality, photorealistic, commercial-grade ad. No watermarks. Text must be sharp, legible, and well-integrated into the layout."
@@ -317,7 +328,8 @@ export function buildProductTextPrompt(
 export function buildProductVisualPrompt(
   client: Client,
   platform: Platform,
-  assetContext?: AssetContext
+  assetContext?: AssetContext,
+  creativeDirection?: string
 ): string {
   const parts: string[] = [...buildCommonSections(client, platform)];
 
@@ -329,6 +341,9 @@ export function buildProductVisualPrompt(
 
   // Product-based reference handling
   parts.push(...buildProductReferenceSection(client, assetContext));
+
+  // Creative direction
+  parts.push(...buildCreativeDirectionSection(creativeDirection));
 
   // Closing
   parts.push(
@@ -349,7 +364,8 @@ export function buildServiceTextPrompt(
   platform: Platform,
   assetContext?: AssetContext,
   headlinePosition?: TextPosition,
-  adCopyPosition?: TextPosition
+  adCopyPosition?: TextPosition,
+  creativeDirection?: string
 ): string {
   const parts: string[] = [...buildCommonSections(client, platform)];
 
@@ -379,6 +395,9 @@ export function buildServiceTextPrompt(
   // Service-based reference handling
   parts.push(...buildServiceReferenceSection(client, assetContext));
 
+  // Creative direction
+  parts.push(...buildCreativeDirectionSection(creativeDirection));
+
   // Closing
   parts.push(
     "High quality, photorealistic, commercial-grade ad. No watermarks. Text must be sharp, legible, and well-integrated into the layout."
@@ -394,7 +413,8 @@ export function buildServiceTextPrompt(
 export function buildServiceVisualPrompt(
   client: Client,
   platform: Platform,
-  assetContext?: AssetContext
+  assetContext?: AssetContext,
+  creativeDirection?: string
 ): string {
   const parts: string[] = [...buildCommonSections(client, platform)];
 
@@ -412,6 +432,9 @@ export function buildServiceVisualPrompt(
 
   // Service-based reference handling
   parts.push(...buildServiceReferenceSection(client, assetContext));
+
+  // Creative direction
+  parts.push(...buildCreativeDirectionSection(creativeDirection));
 
   // Closing
   parts.push(
@@ -433,27 +456,28 @@ export function buildPrompt(
   assetContext?: AssetContext,
   creativeStyle?: CreativeStyle,
   headlinePosition?: TextPosition,
-  adCopyPosition?: TextPosition
+  adCopyPosition?: TextPosition,
+  creativeDirection?: string
 ): string {
   const clientType = client.client_type || "product";
   const style: CreativeStyle = creativeStyle || "with_text";
 
   if (clientType === "product" && style === "with_text") {
-    return buildProductTextPrompt(client, headline, adCopy, platform, assetContext, headlinePosition, adCopyPosition);
+    return buildProductTextPrompt(client, headline, adCopy, platform, assetContext, headlinePosition, adCopyPosition, creativeDirection);
   }
 
   if (clientType === "product" && style === "visuals_only") {
-    return buildProductVisualPrompt(client, platform, assetContext);
+    return buildProductVisualPrompt(client, platform, assetContext, creativeDirection);
   }
 
   if (clientType === "service" && style === "with_text") {
-    return buildServiceTextPrompt(client, headline, adCopy, platform, assetContext, headlinePosition, adCopyPosition);
+    return buildServiceTextPrompt(client, headline, adCopy, platform, assetContext, headlinePosition, adCopyPosition, creativeDirection);
   }
 
   if (clientType === "service" && style === "visuals_only") {
-    return buildServiceVisualPrompt(client, platform, assetContext);
+    return buildServiceVisualPrompt(client, platform, assetContext, creativeDirection);
   }
 
   // Fallback
-  return buildProductTextPrompt(client, headline, adCopy, platform, assetContext, headlinePosition, adCopyPosition);
+  return buildProductTextPrompt(client, headline, adCopy, platform, assetContext, headlinePosition, adCopyPosition, creativeDirection);
 }

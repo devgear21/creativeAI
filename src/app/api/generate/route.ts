@@ -7,7 +7,7 @@ import type { GenerateRequest } from "@/types";
 export async function POST(request: NextRequest) {
   try {
     const body: GenerateRequest = await request.json();
-    const { client_id, headline, ad_copy, platform, aspect_ratio, num_variations, creative_style, headline_position, ad_copy_position, logo_urls, creative_ref_urls, lp_ref_urls } = body;
+    const { client_id, headline, ad_copy, platform, aspect_ratio, num_variations, creative_style, headline_position, ad_copy_position, logo_urls, creative_ref_urls, lp_ref_urls, creative_direction } = body;
 
     if (!client_id || !platform || !aspect_ratio) {
       return NextResponse.json(
@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
       : undefined;
 
     // Build prompt from client brand info + brief
-    const prompt = buildPrompt(client, headline || "", ad_copy || "", platform, assetContext, creative_style, headline_position, ad_copy_position);
+    const prompt = buildPrompt(client, headline || "", ad_copy || "", platform, assetContext, creative_style, headline_position, ad_copy_position, creative_direction);
 
     // Collect image inputs (max 8)
     const imageInput: string[] = [];

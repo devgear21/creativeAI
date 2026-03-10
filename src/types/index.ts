@@ -92,6 +92,7 @@ export interface GenerateRequest {
   logo_urls?: string[];
   creative_ref_urls?: string[];
   lp_ref_urls?: string[];
+  creative_direction?: string;
 }
 
 export interface KieCreateTaskResponse {

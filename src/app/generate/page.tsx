@@ -79,6 +79,7 @@ function GeneratePageContent() {
   const [creativeStyle, setCreativeStyle] = useState<CreativeStyle>("with_text");
   const [headlinePosition, setHeadlinePosition] = useState<TextPosition>("default");
   const [adCopyPosition, setAdCopyPosition] = useState<TextPosition>("default");
+  const [creativeDirection, setCreativeDirection] = useState("");
   const [generating, setGenerating] = useState(false);
 
   // Categorized asset selections
@@ -261,6 +262,7 @@ function GeneratePageContent() {
           logo_urls: selectedLogos.length > 0 ? selectedLogos : undefined,
           creative_ref_urls: selectedCreativeRefs.length > 0 ? selectedCreativeRefs : undefined,
           lp_ref_urls: selectedLpRefs.length > 0 ? selectedLpRefs : undefined,
+          creative_direction: creativeDirection.trim() || undefined,
         }),
       });
 
@@ -660,6 +662,24 @@ function GeneratePageContent() {
                     </p>
                   </div>
                 )}
+
+                {/* Creative Direction / Reference */}
+                <div className="space-y-2">
+                  <Label htmlFor="creative_direction">
+                    Creative Direction{" "}
+                    <span className="text-muted-foreground/50">(optional)</span>
+                  </Label>
+                  <Textarea
+                    id="creative_direction"
+                    value={creativeDirection}
+                    onChange={(e) => setCreativeDirection(e.target.value)}
+                    placeholder='e.g. "Follow Trustpilot user review UI", "Use glassmorphism style cards", "Inspired by Apple minimalist product pages"...'
+                    rows={2}
+                  />
+                  <p className="text-xs text-muted-foreground/60">
+                    Add any creative references, UI inspirations, or art direction notes.
+                  </p>
+                </div>
 
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
