@@ -154,11 +154,27 @@ export function buildPrompt(
   }
 
   // --- Reference Images ---
-  // Balance: learn the brand identity & product from references, but create an ORIGINAL new ad.
-  // Do NOT copy/clone the references. Do NOT ignore them and invent from scratch.
+  // Detect if the brand is service-based (no physical product to photograph differently)
+  // vs product-based (has tangible goods where fresh compositions make sense).
+  const SERVICE_KEYWORDS = [
+    "service", "repair", "maintenance", "consulting", "agency", "clinic",
+    "salon", "spa", "cleaning", "plumbing", "electrician", "mechanic",
+    "accounting", "law", "legal", "dental", "medical", "fitness",
+    "training", "coaching", "tutoring", "catering", "landscaping",
+    "moving", "delivery", "transport", "insurance", "real estate",
+    "photography", "design", "marketing", "mot", "garage", "centre",
+    "center", "studio", "care", "specialist",
+  ];
+  const brandText = [
+    client.brand_description || "",
+    client.industry || "",
+    client.name || "",
+  ].join(" ").toLowerCase();
+  const isServiceBased = SERVICE_KEYWORDS.some((kw) => brandText.includes(kw));
+
   if (assetContext && (assetContext.logoCount > 0 || assetContext.creativeRefCount > 0 || assetContext.lpRefCount > 0)) {
     parts.push(
-      `Reference images have been provided with this request. Study them carefully to understand the brand's visual identity, then create a fresh, ORIGINAL advertising composition inspired by them.`
+      `Reference images have been provided with this request. Study them carefully to understand the brand's visual identity.`
     );
 
     if (assetContext.logoCount > 0) {
@@ -168,12 +184,24 @@ export function buildPrompt(
     }
 
     if (assetContext.creativeRefCount > 0) {
-      parts.push(
-        `CREATIVE REFERENCES (${assetContext.creativeRefCount} image${assetContext.creativeRefCount > 1 ? "s" : ""}): These show the brand's existing ad style and products. ` +
-        `Use them to understand what the brand's products look like, the photography style, composition patterns, and overall aesthetic. ` +
-        `Create a NEW original ad that feels like it belongs to the same brand campaign — same product category, similar quality and style — but with a fresh composition. ` +
-        `Do NOT just copy or recreate these reference images. Do NOT invent a completely different product that doesn't match the brand.`
-      );
+      if (isServiceBased) {
+        // Service-based: the reference images ARE the visual identity — use the actual
+        // imagery (scenes, settings, people, vehicles, tools, environment) from them.
+        parts.push(
+          `CREATIVE REFERENCES (${assetContext.creativeRefCount} image${assetContext.creativeRefCount > 1 ? "s" : ""}): This is a SERVICE-BASED brand — there is no physical "product" to photograph. ` +
+          `The provided reference images show the brand's real-world scenes, settings, equipment, vehicles, or work environment. ` +
+          `USE the actual visual elements from these images (the real scenes, subjects, settings, and atmosphere) as the core imagery in the ad. ` +
+          `You may adjust the composition, cropping, and layout for an advertising format, but the core subject matter and visuals must come from the references — do NOT replace them with generic stock-style imagery.`
+        );
+      } else {
+        // Product-based: understand the product, create a fresh composition
+        parts.push(
+          `CREATIVE REFERENCES (${assetContext.creativeRefCount} image${assetContext.creativeRefCount > 1 ? "s" : ""}): These show the brand's existing ad style and products. ` +
+          `Use them to understand what the brand's products look like, the photography style, composition patterns, and overall aesthetic. ` +
+          `Create a NEW original ad that feels like it belongs to the same brand campaign — same product category, similar quality and style — but with a fresh composition. ` +
+          `Do NOT just copy or recreate these reference images. Do NOT invent a completely different product that doesn't match the brand.`
+        );
+      }
     }
 
     if (assetContext.lpRefCount > 0) {
@@ -182,9 +210,15 @@ export function buildPrompt(
       );
     }
 
-    parts.push(
-      `KEY RULE: The output should be a NEW creative that is clearly on-brand (informed by the references) but NOT a duplicate of any reference image. Think of it as creating the next ad in the same campaign series.`
-    );
+    if (isServiceBased) {
+      parts.push(
+        `KEY RULE: This is a service brand — the reference images ARE the brand's visual identity. Feature the real scenes and subjects from them in a polished ad layout. Do NOT substitute with generic or AI-invented imagery.`
+      );
+    } else {
+      parts.push(
+        `KEY RULE: The output should be a NEW creative that is clearly on-brand (informed by the references) but NOT a duplicate of any reference image. Think of it as creating the next ad in the same campaign series.`
+      );
+    }
   } else {
     // Fallback: auto-collected client images
     const assetCount =
@@ -204,12 +238,21 @@ export function buildPrompt(
       if (assetCount > 0)
         refParts.push(`${assetCount} brand asset(s)`);
 
-      parts.push(
-        `Reference images have been provided including ${refParts.join(", ")}. ` +
-        `Study them to understand the brand's visual identity, product appearance, and style. ` +
-        `Then create a NEW original ad that is clearly on-brand — same product category, similar quality and aesthetic — but with a fresh composition. ` +
-        `Do NOT copy the references. Do NOT ignore them and invent something unrelated. Create the next ad in the same campaign family.`
-      );
+      if (isServiceBased) {
+        parts.push(
+          `Reference images have been provided including ${refParts.join(", ")}. ` +
+          `This is a service-based brand — the reference images show the brand's real-world scenes, settings, and environment. ` +
+          `USE the actual visual elements from these images as the core imagery in the ad. ` +
+          `Adjust composition for an ad format, but keep the real subjects and settings — do NOT replace them with generic imagery.`
+        );
+      } else {
+        parts.push(
+          `Reference images have been provided including ${refParts.join(", ")}. ` +
+          `Study them to understand the brand's visual identity, product appearance, and style. ` +
+          `Then create a NEW original ad that is clearly on-brand — same product category, similar quality and aesthetic — but with a fresh composition. ` +
+          `Do NOT copy the references. Do NOT ignore them and invent something unrelated. Create the next ad in the same campaign family.`
+        );
+      }
     }
   }
 
