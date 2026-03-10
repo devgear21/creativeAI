@@ -24,7 +24,8 @@ import {
   Globe,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import type { Client, ClientAssets } from "@/types";
+import type { Client, ClientAssets, ClientType } from "@/types";
+import { CLIENT_TYPES } from "@/types";
 
 interface ClientFormProps {
   defaultValues?: Partial<Client>;
@@ -41,6 +42,7 @@ export function ClientForm({ defaultValues, mode }: ClientFormProps) {
 
   // Core fields
   const [name, setName] = useState(defaultValues?.name || "");
+  const [clientType, setClientType] = useState<ClientType>(defaultValues?.client_type || "product");
   const [brandBookUrl, setBrandBookUrl] = useState(
     defaultValues?.brand_book_url || ""
   );
@@ -211,6 +213,7 @@ export function ClientForm({ defaultValues, mode }: ClientFormProps) {
 
       const payload: Record<string, unknown> = {
         name: name.trim(),
+        client_type: clientType,
         brand_book_url: brandBookUrl || null,
         assets_data: hasAnyAssets ? assetsData : null,
       };
@@ -390,6 +393,26 @@ export function ClientForm({ defaultValues, mode }: ClientFormProps) {
                 onChange={(e) => setName(e.target.value)}
                 placeholder="e.g. Acme Corp"
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Client Type *</Label>
+              <div className="flex gap-3">
+                {CLIENT_TYPES.map((ct) => (
+                  <button
+                    key={ct.value}
+                    type="button"
+                    onClick={() => setClientType(ct.value)}
+                    className={`flex-1 rounded-xl border-2 px-4 py-3 text-sm font-medium transition-all ${
+                      clientType === ct.value
+                        ? "border-violet-500 bg-violet-500/10 text-violet-400"
+                        : "border-border/50 text-muted-foreground hover:border-border hover:text-foreground"
+                    }`}
+                  >
+                    {ct.label}
+                  </button>
+                ))}
+              </div>
             </div>
 
             <div className="space-y-2">

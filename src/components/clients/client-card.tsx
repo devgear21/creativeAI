@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Spotlight } from "@/components/ui/spotlight";
-import { FileText, Image as ImageIcon, ArrowUpRight } from "lucide-react";
+import { FileText, Image as ImageIcon, ArrowUpRight, Package, Wrench } from "lucide-react";
 import type { Client } from "@/types";
 
 interface ClientCardProps {
@@ -50,6 +50,13 @@ export function ClientCard({ client }: ClientCardProps) {
           </div>
 
           <div className="flex flex-wrap gap-1.5">
+            <Badge variant="secondary" className="text-xs">
+              {client.client_type === "service" ? (
+                <><Wrench className="mr-1 h-3 w-3" />Service</>  
+              ) : (
+                <><Package className="mr-1 h-3 w-3" />Product</>  
+              )}
+            </Badge>
             {client.brand_book_url && (
               <Badge variant="secondary" className="text-xs">
                 <FileText className="mr-1 h-3 w-3" />

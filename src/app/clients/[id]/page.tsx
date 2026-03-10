@@ -28,6 +28,8 @@ import {
   ShieldAlert,
   Trash2,
   ArrowLeft,
+  Package,
+  Wrench,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
@@ -179,9 +181,18 @@ export default function ClientDetailPage() {
           )}
           <div>
             <h1 className="text-2xl font-bold text-foreground">{client.name}</h1>
-            {client.industry && (
-              <p className="text-sm text-muted-foreground">{client.industry}</p>
-            )}
+            <div className="flex items-center gap-2 mt-1">
+              {client.industry && (
+                <p className="text-sm text-muted-foreground">{client.industry}</p>
+              )}
+              <Badge variant="secondary" className="text-xs">
+                {client.client_type === "service" ? (
+                  <><Wrench className="mr-1 h-3 w-3" />Service Based</>  
+                ) : (
+                  <><Package className="mr-1 h-3 w-3" />Product Based</>  
+                )}
+              </Badge>
+            </div>
           </div>
         </div>
         <div className="flex gap-2">

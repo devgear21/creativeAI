@@ -4,9 +4,16 @@ export interface ClientAssets {
   landing_pages_reference: string[];
 }
 
+export type ClientType = "product" | "service";
+
+export type CreativeStyle = "with_text" | "visuals_only";
+
+export type TextPosition = "top" | "middle" | "bottom" | "left" | "right" | "default";
+
 export interface Client {
   id: string;
   name: string;
+  client_type: ClientType;
   industry: string | null;
   brand_colors: string | null;
   font_style: string | null;
@@ -79,6 +86,9 @@ export interface GenerateRequest {
   platform: Platform;
   aspect_ratio: AspectRatio;
   num_variations: number;
+  creative_style: CreativeStyle;
+  headline_position?: TextPosition;
+  ad_copy_position?: TextPosition;
   logo_urls?: string[];
   creative_ref_urls?: string[];
   lp_ref_urls?: string[];
@@ -115,6 +125,25 @@ export const PLATFORMS: { value: Platform; label: string }[] = [
   { value: "facebook", label: "Facebook" },
   { value: "linkedin", label: "LinkedIn" },
   { value: "twitter", label: "Twitter / X" },
+];
+
+export const CLIENT_TYPES: { value: ClientType; label: string }[] = [
+  { value: "product", label: "Product Based" },
+  { value: "service", label: "Service Based" },
+];
+
+export const CREATIVE_STYLES: { value: CreativeStyle; label: string; description: string }[] = [
+  { value: "with_text", label: "With Text", description: "Includes headline and ad copy in the creative" },
+  { value: "visuals_only", label: "Visuals Only", description: "Pure visual creative with no text elements" },
+];
+
+export const TEXT_POSITIONS: { value: TextPosition; label: string }[] = [
+  { value: "default", label: "Default" },
+  { value: "top", label: "Top" },
+  { value: "middle", label: "Middle" },
+  { value: "bottom", label: "Bottom" },
+  { value: "left", label: "Left Side" },
+  { value: "right", label: "Right Side" },
 ];
 
 export const ASPECT_RATIOS: { value: AspectRatio; label: string }[] = [

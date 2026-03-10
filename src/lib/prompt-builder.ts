@@ -1,226 +1,182 @@
-import type { Client, Platform } from "@/types";
+import type { Client, Platform, CreativeStyle, TextPosition } from "@/types";
+
+// ─── Platform Style Labels ───────────────────────────────────────────────────
 
 const PLATFORM_STYLES: Record<Platform, string> = {
   instagram:
-    "Social media ad for Instagram. Vibrant, eye-catching, modern aesthetic. Clean layout suitable for a square or vertical feed post.",
+    "Format: Instagram ad. Vibrant, eye-catching, modern. Clean layout for feed post.",
   facebook:
-    "Social media ad for Facebook. Professional yet engaging visual. Suitable for news feed placement with clear focal point.",
+    "Format: Facebook ad. Professional, engaging. Clear focal point for news feed.",
   linkedin:
-    "Professional advertisement for LinkedIn. Corporate, polished, trustworthy aesthetic. Business-appropriate imagery.",
+    "Format: LinkedIn ad. Corporate, polished, trustworthy. Business-appropriate.",
   twitter:
-    "Social media ad for Twitter/X. Bold, attention-grabbing visual. Works well at small sizes in a fast-scrolling feed.",
+    "Format: Twitter/X ad. Bold, attention-grabbing. Works at small sizes.",
 };
 
-export function buildPrompt(
-  client: Client,
-  headline: string,
-  adCopy: string,
-  platform: Platform,
-  assetContext?: {
-    logoCount: number;
-    creativeRefCount: number;
-    lpRefCount: number;
-  }
-): string {
+// ─── Asset Context ───────────────────────────────────────────────────────────
+
+export interface AssetContext {
+  logoCount: number;
+  creativeRefCount: number;
+  lpRefCount: number;
+}
+
+// ─── Text Position Mapping ───────────────────────────────────────────────────
+
+const POSITION_INSTRUCTIONS: Record<TextPosition, string> = {
+  default: "positioned where it naturally fits the composition",
+  top: "positioned at the TOP of the image",
+  middle: "positioned in the CENTER/MIDDLE of the image",
+  bottom: "positioned at the BOTTOM of the image",
+  left: "positioned on the LEFT SIDE of the image",
+  right: "positioned on the RIGHT SIDE of the image",
+};
+
+// ─── Shared Prompt Sections (private helpers) ──────────────────────────────
+
+function buildBrandSection(client: Client): string[] {
   const parts: string[] = [];
 
-  // --- Brand Identity ---
   parts.push(
-    `Create a professional advertising image for the brand "${client.name}".`
+    `Create a high-end advertising image for "${client.name}".`
   );
 
   if (client.brand_description) {
-    parts.push(`The brand does the following: ${client.brand_description}.`);
+    parts.push(`Brand context: ${client.brand_description}.`);
   } else if (client.industry) {
-    parts.push(`The brand operates in the ${client.industry} industry.`);
+    parts.push(`Industry: ${client.industry}.`);
   }
 
   if (client.target_audience) {
-    parts.push(
-      `The target audience is: ${client.target_audience}. The ad should resonate with this demographic.`
-    );
+    parts.push(`Target audience: ${client.target_audience}.`);
   }
 
-  // --- Ad Content ---
-  const hasTextContent = !!(headline && headline.trim()) || !!(adCopy && adCopy.trim());
+  return parts;
+}
 
-  if (headline && headline.trim()) {
-    parts.push(`The ad headline is: "${headline.trim()}". Include this text prominently in the design.`);
-  }
+function buildVisualVibeSection(client: Client): string[] {
+  const parts: string[] = [];
 
-  if (adCopy && adCopy.trim()) {
-    parts.push(`The ad communicates: ${adCopy.trim()}`);
-  }
-
-  if (!hasTextContent) {
-    parts.push(
-      `This is a VISUAL-ONLY creative — do NOT include any text, headlines, taglines, captions, or typographic elements in the image. ` +
-      `The output should be a pure visual/photographic composition that communicates the brand identity through imagery, color, and composition alone.`
-    );
-  }
-
-  // --- Platform ---
-  parts.push(PLATFORM_STYLES[platform]);
-
-  // --- Visual Vibe ---
   if (client.visual_vibe) {
-    parts.push(
-      `The overall visual vibe should be: ${client.visual_vibe}. Let this guide the mood, composition, and feel of the entire image.`
-    );
+    parts.push(`Visual mood/vibe: ${client.visual_vibe}.`);
   }
 
-  // --- Colors ---
+  return parts;
+}
+
+function buildColorSection(client: Client): string[] {
+  const parts: string[] = [];
   const colorParts: string[] = [];
 
-  if (client.primary_color) {
-    colorParts.push(`Primary brand color: ${client.primary_color}`);
-  }
-  if (client.secondary_color) {
-    colorParts.push(`Secondary brand color: ${client.secondary_color}`);
-  }
-  if (client.other_colors) {
-    colorParts.push(`Other brand colors: ${client.other_colors}`);
-  }
+  if (client.primary_color) colorParts.push(`primary: ${client.primary_color}`);
+  if (client.secondary_color) colorParts.push(`secondary: ${client.secondary_color}`);
+  if (client.other_colors) colorParts.push(`accents: ${client.other_colors}`);
 
   if (colorParts.length > 0) {
-    parts.push(
-      `Use the brand's color palette — ${colorParts.join("; ")}. These colors should be prominent in the design.`
-    );
+    parts.push(`Brand colors — ${colorParts.join(", ")}. Use these prominently.`);
   } else if (client.brand_colors) {
-    // Legacy fallback
-    const colors = client.brand_colors
-      .split(",")
-      .map((c) => c.trim())
-      .join(", ");
-    parts.push(
-      `Use the brand's color palette featuring: ${colors}. These colors should be prominent in the design.`
-    );
+    parts.push(`Brand colors: ${client.brand_colors}. Use these prominently.`);
   }
 
   if (client.gradient_variations) {
-    parts.push(
-      `Apply gradient variations where appropriate: ${client.gradient_variations}.`
-    );
+    parts.push(`Gradients: ${client.gradient_variations}.`);
   }
 
-  // --- Fonts / Typography ---
+  return parts;
+}
+
+function buildFontSection(client: Client): string[] {
+  const parts: string[] = [];
   const fontParts: string[] = [];
 
-  if (client.heading_font) {
-    fontParts.push(`Heading font: ${client.heading_font}`);
-  }
-  if (client.body_font) {
-    fontParts.push(`Body font: ${client.body_font}`);
-  }
-  if (client.style_font) {
-    fontParts.push(`Style/accent font: ${client.style_font}`);
-  }
+  if (client.heading_font) fontParts.push(`heading: ${client.heading_font}`);
+  if (client.body_font) fontParts.push(`body: ${client.body_font}`);
+  if (client.style_font) fontParts.push(`accent: ${client.style_font}`);
 
   if (fontParts.length > 0) {
-    parts.push(
-      `The typography direction is: ${fontParts.join("; ")}. The visual style should complement this typographic approach.`
-    );
+    parts.push(`Typography: ${fontParts.join(", ")}.`);
   } else if (client.font_style) {
-    // Legacy fallback
-    parts.push(
-      `The visual style should complement a ${client.font_style} typography approach.`
-    );
+    parts.push(`Typography style: ${client.font_style}.`);
   }
 
-  // --- Imagery Style ---
+  return parts;
+}
+
+function buildImagerySection(client: Client): string[] {
+  const parts: string[] = [];
+
   if (client.imagery_style) {
-    parts.push(
-      `Imagery style direction: ${client.imagery_style}. Follow this guidance for photo/illustration composition, lighting, and texture.`
-    );
+    parts.push(`Imagery style: ${client.imagery_style}.`);
   } else if (client.tone_of_voice) {
-    // Legacy fallback
-    parts.push(
-      `The visual tone should feel ${client.tone_of_voice.toLowerCase()}.`
-    );
+    parts.push(`Visual tone: ${client.tone_of_voice.toLowerCase()}.`);
   }
 
-  // --- Constraints: What to Avoid ---
+  return parts;
+}
+
+function buildConstraintsSection(client: Client): string[] {
+  const parts: string[] = [];
+
   if (client.what_to_avoid) {
-    parts.push(
-      `IMPORTANT — Avoid the following in the design: ${client.what_to_avoid}.`
-    );
+    parts.push(`AVOID: ${client.what_to_avoid}.`);
   }
 
-  // --- Do's & Don'ts ---
   if (client.dos_and_donts) {
-    parts.push(
-      `Brand do's and don'ts to follow: ${client.dos_and_donts}.`
-    );
+    parts.push(`Rules: ${client.dos_and_donts}.`);
   }
 
-  // --- Reference Images ---
-  // Detect if the brand is service-based (no physical product to photograph differently)
-  // vs product-based (has tangible goods where fresh compositions make sense).
-  const SERVICE_KEYWORDS = [
-    "service", "repair", "maintenance", "consulting", "agency", "clinic",
-    "salon", "spa", "cleaning", "plumbing", "electrician", "mechanic",
-    "accounting", "law", "legal", "dental", "medical", "fitness",
-    "training", "coaching", "tutoring", "catering", "landscaping",
-    "moving", "delivery", "transport", "insurance", "real estate",
-    "photography", "design", "marketing", "mot", "garage", "centre",
-    "center", "studio", "care", "specialist",
+  return parts;
+}
+
+function buildCommonSections(client: Client, platform: Platform): string[] {
+  return [
+    ...buildBrandSection(client),
+    PLATFORM_STYLES[platform],
+    ...buildVisualVibeSection(client),
+    ...buildColorSection(client),
+    ...buildFontSection(client),
+    ...buildImagerySection(client),
+    ...buildConstraintsSection(client),
   ];
-  const brandText = [
-    client.brand_description || "",
-    client.industry || "",
-    client.name || "",
-  ].join(" ").toLowerCase();
-  const isServiceBased = SERVICE_KEYWORDS.some((kw) => brandText.includes(kw));
+}
+
+// ─── Product Reference Section ───────────────────────────────────────────────
+
+function buildProductReferenceSection(client: Client, assetContext?: AssetContext): string[] {
+  const parts: string[] = [];
 
   if (assetContext && (assetContext.logoCount > 0 || assetContext.creativeRefCount > 0 || assetContext.lpRefCount > 0)) {
     parts.push(
-      `Reference images have been provided with this request. Study them carefully to understand the brand's visual identity.`
+      `CRITICAL — Reference images are attached. You MUST base your output on these references. Do NOT ignore them. Do NOT invent new subjects.`
     );
 
     if (assetContext.logoCount > 0) {
       parts.push(
-        `LOGO (${assetContext.logoCount} image${assetContext.logoCount > 1 ? "s" : ""}): The brand's logo is included. Place it naturally in the ad layout. Keep the logo recognizable — do not redraw or heavily alter it.`
+        `LOGO (${assetContext.logoCount}): The brand's logo is included. Incorporate it cleanly into the design. Keep it recognizable — do NOT redraw it.`
       );
     }
 
     if (assetContext.creativeRefCount > 0) {
-      if (isServiceBased) {
-        // Service-based: the reference images ARE the visual identity — use the actual
-        // imagery (scenes, settings, people, vehicles, tools, environment) from them.
-        parts.push(
-          `CREATIVE REFERENCES (${assetContext.creativeRefCount} image${assetContext.creativeRefCount > 1 ? "s" : ""}): This is a SERVICE-BASED brand — there is no physical "product" to photograph. ` +
-          `The provided reference images show the brand's real-world scenes, settings, equipment, vehicles, or work environment. ` +
-          `USE the actual visual elements from these images (the real scenes, subjects, settings, and atmosphere) as the core imagery in the ad. ` +
-          `You may adjust the composition, cropping, and layout for an advertising format, but the core subject matter and visuals must come from the references — do NOT replace them with generic stock-style imagery.`
-        );
-      } else {
-        // Product-based: understand the product, create a fresh composition
-        parts.push(
-          `CREATIVE REFERENCES (${assetContext.creativeRefCount} image${assetContext.creativeRefCount > 1 ? "s" : ""}): These show the brand's existing ad style and products. ` +
-          `Use them to understand what the brand's products look like, the photography style, composition patterns, and overall aesthetic. ` +
-          `Create a NEW original ad that feels like it belongs to the same brand campaign — same product category, similar quality and style — but with a fresh composition. ` +
-          `Do NOT just copy or recreate these reference images. Do NOT invent a completely different product that doesn't match the brand.`
-        );
-      }
+      parts.push(
+        `CREATIVE REFERENCES (${assetContext.creativeRefCount}): These show the brand's ACTUAL products and existing creative style. ` +
+        `MANDATORY: Match the exact same product type, packaging, shape, and appearance shown in these references. ` +
+        `Match the same photographic style — the same lighting direction, color grading, depth of field, and background treatment. ` +
+        `Match the same composition approach — how the product is staged, the camera angle, and the spatial layout. ` +
+        `Create a fresh variation that looks like the NEXT ad in the same campaign — same product, same style, different angle or arrangement. ` +
+        `Do NOT invent a different product. Do NOT change the product category. Do NOT use generic stock imagery. The product in the output MUST look like the same product from the references.`
+      );
     }
 
     if (assetContext.lpRefCount > 0) {
       parts.push(
-        `LANDING PAGE REFERENCES (${assetContext.lpRefCount} image${assetContext.lpRefCount > 1 ? "s" : ""}): These show the brand's web presence. Match the overall visual language — color treatment, imagery style, and tone — so the ad feels consistent with the website.`
+        `LANDING PAGE REFERENCES (${assetContext.lpRefCount}): Match the same color treatment, visual language, and overall tone as the brand's website.`
       );
     }
 
-    if (isServiceBased) {
-      parts.push(
-        `KEY RULE: This is a service brand — the reference images ARE the brand's visual identity. Feature the real scenes and subjects from them in a polished ad layout. Do NOT substitute with generic or AI-invented imagery.`
-      );
-    } else {
-      parts.push(
-        `KEY RULE: The output should be a NEW creative that is clearly on-brand (informed by the references) but NOT a duplicate of any reference image. Think of it as creating the next ad in the same campaign series.`
-      );
-    }
+    parts.push(
+      `FINAL CHECK: The output must look like it belongs to the exact same brand and campaign as the reference images. Same product, same style, fresh composition.`
+    );
   } else {
-    // Fallback: auto-collected client images
     const assetCount =
       (client.assets_data?.logos?.length || 0) +
       (client.assets_data?.creatives_reference?.length || 0) +
@@ -232,39 +188,272 @@ export function buildPrompt(
 
     if (hasReferenceImages) {
       const refParts: string[] = [];
-      if (client.logo_url) refParts.push("the brand logo");
-      if (client.brand_book_url)
-        refParts.push("the brand book/guidelines");
-      if (assetCount > 0)
-        refParts.push(`${assetCount} brand asset(s)`);
+      if (client.logo_url) refParts.push("logo");
+      if (client.brand_book_url) refParts.push("brand book");
+      if (assetCount > 0) refParts.push(`${assetCount} asset(s)`);
 
-      if (isServiceBased) {
-        parts.push(
-          `Reference images have been provided including ${refParts.join(", ")}. ` +
-          `This is a service-based brand — the reference images show the brand's real-world scenes, settings, and environment. ` +
-          `USE the actual visual elements from these images as the core imagery in the ad. ` +
-          `Adjust composition for an ad format, but keep the real subjects and settings — do NOT replace them with generic imagery.`
-        );
-      } else {
-        parts.push(
-          `Reference images have been provided including ${refParts.join(", ")}. ` +
-          `Study them to understand the brand's visual identity, product appearance, and style. ` +
-          `Then create a NEW original ad that is clearly on-brand — same product category, similar quality and aesthetic — but with a fresh composition. ` +
-          `Do NOT copy the references. Do NOT ignore them and invent something unrelated. Create the next ad in the same campaign family.`
-        );
-      }
+      parts.push(
+        `Reference images provided: ${refParts.join(", ")}. ` +
+        `MANDATORY: Study these carefully. Match the exact product appearance, photography style, color grading, and composition approach. ` +
+        `Create a new ad that features the SAME product with the SAME style — only vary the composition. Do NOT invent a different product or use generic imagery.`
+      );
     }
   }
 
-  if (hasTextContent) {
+  return parts;
+}
+
+// ─── Service Reference Section ───────────────────────────────────────────────
+
+function buildServiceReferenceSection(client: Client, assetContext?: AssetContext): string[] {
+  const parts: string[] = [];
+
+  if (assetContext && (assetContext.logoCount > 0 || assetContext.creativeRefCount > 0 || assetContext.lpRefCount > 0)) {
     parts.push(
-      "High quality, photorealistic rendering. No watermarks. The text/headline should be integrated cleanly into the design. Suitable for commercial advertising use."
+      `CRITICAL — Reference images are attached. You MUST base your output on these references. Do NOT ignore them. Do NOT invent new subjects.`
+    );
+
+    if (assetContext.logoCount > 0) {
+      parts.push(
+        `LOGO (${assetContext.logoCount}): The brand's logo is included. Incorporate it cleanly into the design. Keep it recognizable — do NOT redraw it.`
+      );
+    }
+
+    if (assetContext.creativeRefCount > 0) {
+      parts.push(
+        `CREATIVE REFERENCES (${assetContext.creativeRefCount}): This is a SERVICE brand — the references show the brand's real-world scenes, people, settings, equipment, or work environment. ` +
+        `MANDATORY: USE the actual visual elements from these references as the core imagery. ` +
+        `Replicate the exact same type of scene, setting, and subjects shown in the references. ` +
+        `Match the same photographic style — lighting, color grading, depth of field, and atmosphere. ` +
+        `You may recompose for ad layout, but the subjects, environment, and visual feel MUST come from the references. ` +
+        `Do NOT replace them with generic stock imagery. Do NOT invent different scenes. The output must look like it was shot in the same location/context as the references.`
+      );
+    }
+
+    if (assetContext.lpRefCount > 0) {
+      parts.push(
+        `LANDING PAGE REFERENCES (${assetContext.lpRefCount}): Match the same color treatment, visual language, and overall tone as the brand's website.`
+      );
+    }
+
+    parts.push(
+      `FINAL CHECK: The output must feature the REAL scenes and subjects from the references in a polished ad layout. Do NOT substitute with generic or AI-hallucinated imagery.`
     );
   } else {
+    const assetCount =
+      (client.assets_data?.logos?.length || 0) +
+      (client.assets_data?.creatives_reference?.length || 0) +
+      (client.assets_data?.landing_pages_reference?.length || 0);
+    const hasReferenceImages =
+      client.logo_url ||
+      client.brand_book_url ||
+      assetCount > 0;
+
+    if (hasReferenceImages) {
+      const refParts: string[] = [];
+      if (client.logo_url) refParts.push("logo");
+      if (client.brand_book_url) refParts.push("brand book");
+      if (assetCount > 0) refParts.push(`${assetCount} asset(s)`);
+
+      parts.push(
+        `Reference images provided: ${refParts.join(", ")}. ` +
+        `This is a service brand — USE the actual scenes, settings, and subjects from the references as core imagery. ` +
+        `Match the photographic style, color grading, and atmosphere exactly. Do NOT replace with generic imagery.`
+      );
+    }
+  }
+
+  return parts;
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 1. PRODUCT + WITH TEXT
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+export function buildProductTextPrompt(
+  client: Client,
+  headline: string,
+  adCopy: string,
+  platform: Platform,
+  assetContext?: AssetContext,
+  headlinePosition?: TextPosition,
+  adCopyPosition?: TextPosition
+): string {
+  const parts: string[] = [...buildCommonSections(client, platform)];
+
+  // Ad content — text with positioning
+  if (headline && headline.trim()) {
+    const pos = headlinePosition && headlinePosition !== "default"
+      ? `, ${POSITION_INSTRUCTIONS[headlinePosition]}`
+      : "";
     parts.push(
-      "High quality, photorealistic rendering. Absolutely no text, words, letters, numbers, or watermarks anywhere in the image. Suitable for commercial advertising use."
+      `HEADLINE TEXT: "${headline.trim()}" — render this text prominently and legibly in the design${pos}. Use a bold, clean typeface that contrasts well against the background.`
+    );
+  }
+  if (adCopy && adCopy.trim()) {
+    const pos = adCopyPosition && adCopyPosition !== "default"
+      ? `, ${POSITION_INSTRUCTIONS[adCopyPosition]}`
+      : "";
+    parts.push(
+      `BODY COPY: "${adCopy.trim()}" — include this as secondary text in the design${pos}. Keep it readable and smaller than the headline.`
     );
   }
 
+  // Product-based reference handling
+  parts.push(...buildProductReferenceSection(client, assetContext));
+
+  // Closing
+  parts.push(
+    "High quality, photorealistic, commercial-grade ad. No watermarks. Text must be sharp, legible, and well-integrated into the layout."
+  );
+
   return parts.join(" ");
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 2. PRODUCT + VISUALS ONLY
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+export function buildProductVisualPrompt(
+  client: Client,
+  platform: Platform,
+  assetContext?: AssetContext
+): string {
+  const parts: string[] = [...buildCommonSections(client, platform)];
+
+  // Visual-only instruction
+  parts.push(
+    `VISUAL-ONLY creative — absolutely NO text, headlines, taglines, captions, letters, numbers, or typographic elements anywhere in the image. ` +
+    `Pure product photography/visual composition. Showcase the product in an aspirational, editorial-quality setting that matches the brand aesthetic from the references.`
+  );
+
+  // Product-based reference handling
+  parts.push(...buildProductReferenceSection(client, assetContext));
+
+  // Closing
+  parts.push(
+    "High quality, photorealistic, commercial-grade. ZERO text or watermarks anywhere. Clean product-focused visual."
+  );
+
+  return parts.join(" ");
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 3. SERVICE + WITH TEXT
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+export function buildServiceTextPrompt(
+  client: Client,
+  headline: string,
+  adCopy: string,
+  platform: Platform,
+  assetContext?: AssetContext,
+  headlinePosition?: TextPosition,
+  adCopyPosition?: TextPosition
+): string {
+  const parts: string[] = [...buildCommonSections(client, platform)];
+
+  // Ad content — text with positioning
+  if (headline && headline.trim()) {
+    const pos = headlinePosition && headlinePosition !== "default"
+      ? `, ${POSITION_INSTRUCTIONS[headlinePosition]}`
+      : "";
+    parts.push(
+      `HEADLINE TEXT: "${headline.trim()}" — render this text prominently and legibly in the design${pos}. Use a bold, clean typeface that contrasts well against the background.`
+    );
+  }
+  if (adCopy && adCopy.trim()) {
+    const pos = adCopyPosition && adCopyPosition !== "default"
+      ? `, ${POSITION_INSTRUCTIONS[adCopyPosition]}`
+      : "";
+    parts.push(
+      `BODY COPY: "${adCopy.trim()}" — include this as secondary text in the design${pos}. Keep it readable and smaller than the headline.`
+    );
+  }
+
+  // Service-specific context
+  parts.push(
+    `SERVICE BRAND: Feature real-world scenes, people, or environments representing this service. The ad should feel authentic and relatable, not abstract.`
+  );
+
+  // Service-based reference handling
+  parts.push(...buildServiceReferenceSection(client, assetContext));
+
+  // Closing
+  parts.push(
+    "High quality, photorealistic, commercial-grade ad. No watermarks. Text must be sharp, legible, and well-integrated into the layout."
+  );
+
+  return parts.join(" ");
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 4. SERVICE + VISUALS ONLY
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+export function buildServiceVisualPrompt(
+  client: Client,
+  platform: Platform,
+  assetContext?: AssetContext
+): string {
+  const parts: string[] = [...buildCommonSections(client, platform)];
+
+  // Visual-only instruction
+  parts.push(
+    `VISUAL-ONLY creative — absolutely NO text, headlines, taglines, captions, letters, numbers, or typographic elements anywhere in the image. ` +
+    `Pure photographic composition showing the service in action.`
+  );
+
+  // Service-specific context
+  parts.push(
+    `SERVICE BRAND: Feature real-world scenes, people, or environments representing this service. ` +
+    `Use the actual subjects and settings from the reference images. The visual must feel authentic, not generic stock photography.`
+  );
+
+  // Service-based reference handling
+  parts.push(...buildServiceReferenceSection(client, assetContext));
+
+  // Closing
+  parts.push(
+    "High quality, photorealistic, commercial-grade. ZERO text or watermarks anywhere. Authentic service-focused visual."
+  );
+
+  return parts.join(" ");
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ROUTER — thin dispatcher that reads client_type + creative_style
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+export function buildPrompt(
+  client: Client,
+  headline: string,
+  adCopy: string,
+  platform: Platform,
+  assetContext?: AssetContext,
+  creativeStyle?: CreativeStyle,
+  headlinePosition?: TextPosition,
+  adCopyPosition?: TextPosition
+): string {
+  const clientType = client.client_type || "product";
+  const style: CreativeStyle = creativeStyle || "with_text";
+
+  if (clientType === "product" && style === "with_text") {
+    return buildProductTextPrompt(client, headline, adCopy, platform, assetContext, headlinePosition, adCopyPosition);
+  }
+
+  if (clientType === "product" && style === "visuals_only") {
+    return buildProductVisualPrompt(client, platform, assetContext);
+  }
+
+  if (clientType === "service" && style === "with_text") {
+    return buildServiceTextPrompt(client, headline, adCopy, platform, assetContext, headlinePosition, adCopyPosition);
+  }
+
+  if (clientType === "service" && style === "visuals_only") {
+    return buildServiceVisualPrompt(client, platform, assetContext);
+  }
+
+  // Fallback
+  return buildProductTextPrompt(client, headline, adCopy, platform, assetContext, headlinePosition, adCopyPosition);
 }

@@ -38,9 +38,13 @@ import {
   PLATFORMS,
   ASPECT_RATIOS,
   PLATFORM_DEFAULT_RATIOS,
+  CREATIVE_STYLES,
+  TEXT_POSITIONS,
   type Client,
   type Platform,
   type AspectRatio,
+  type CreativeStyle,
+  type TextPosition,
 } from "@/types";
 
 interface GenerationResult {
@@ -72,6 +76,9 @@ function GeneratePageContent() {
   const [platform, setPlatform] = useState<Platform>("instagram");
   const [aspectRatio, setAspectRatio] = useState<AspectRatio>("1:1");
   const [numVariations, setNumVariations] = useState(1);
+  const [creativeStyle, setCreativeStyle] = useState<CreativeStyle>("with_text");
+  const [headlinePosition, setHeadlinePosition] = useState<TextPosition>("default");
+  const [adCopyPosition, setAdCopyPosition] = useState<TextPosition>("default");
   const [generating, setGenerating] = useState(false);
 
   // Categorized asset selections
@@ -243,11 +250,14 @@ function GeneratePageContent() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           client_id: clientId,
-          headline: headline.trim() || undefined,
-          ad_copy: adCopy.trim() || undefined,
+          headline: creativeStyle === "with_text" ? (headline.trim() || undefined) : undefined,
+          ad_copy: creativeStyle === "with_text" ? (adCopy.trim() || undefined) : undefined,
           platform,
           aspect_ratio: aspectRatio,
           num_variations: numVariations,
+          creative_style: creativeStyle,
+          headline_position: creativeStyle === "with_text" ? headlinePosition : undefined,
+          ad_copy_position: creativeStyle === "with_text" ? adCopyPosition : undefined,
           logo_urls: selectedLogos.length > 0 ? selectedLogos : undefined,
           creative_ref_urls: selectedCreativeRefs.length > 0 ? selectedCreativeRefs : undefined,
           lp_ref_urls: selectedLpRefs.length > 0 ? selectedLpRefs : undefined,
@@ -540,32 +550,116 @@ function GeneratePageContent() {
                   )}
                 </div>
 
+                {/* Creative Style Toggle */}
                 <div className="space-y-2">
-                  <Label htmlFor="headline">
-                    Headline{" "}
-                    <span className="text-muted-foreground/50">(optional)</span>
-                  </Label>
-                  <Input
-                    id="headline"
-                    value={headline}
-                    onChange={(e) => setHeadline(e.target.value)}
-                    placeholder="e.g. Summer Sale - 50% Off Everything"
-                  />
+                  <Label>Creative Style *</Label>
+                  <div className="grid grid-cols-2 gap-3">
+                    {CREATIVE_STYLES.map((cs) => (
+                      <button
+                        key={cs.value}
+                        type="button"
+                        onClick={() => setCreativeStyle(cs.value)}
+                        className={`rounded-xl border-2 px-4 py-3 text-left transition-all ${
+                          creativeStyle === cs.value
+                            ? "border-violet-500 bg-violet-500/10"
+                            : "border-border/50 hover:border-border"
+                        }`}
+                      >
+                        <p className={`text-sm font-medium ${
+                          creativeStyle === cs.value ? "text-violet-400" : "text-foreground"
+                        }`}>
+                          {cs.label}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {cs.description}
+                        </p>
+                      </button>
+                    ))}
+                  </div>
+                  {selectedClient && (
+                    <p className="text-xs text-muted-foreground/70">
+                      Client type: <span className="font-medium text-muted-foreground">{selectedClient.client_type === "service" ? "Service Based" : "Product Based"}</span>
+                    </p>
+                  )}
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="ad_copy">
-                    Ad Copy / Brief{" "}
-                    <span className="text-muted-foreground/50">(optional)</span>
-                  </Label>
-                  <Textarea
-                    id="ad_copy"
-                    value={adCopy}
-                    onChange={(e) => setAdCopy(e.target.value)}
-                    placeholder="Describe what should be in the image. Include any specific elements, mood, or style directions..."
-                    rows={3}
-                  />
-                </div>
+                {creativeStyle === "with_text" && (
+                  <>
+                    <div className="space-y-2">
+                      <Label htmlFor="headline">
+                        Headline{" "}
+                        <span className="text-muted-foreground/50">(optional)</span>
+                      </Label>
+                      <Input
+                        id="headline"
+                        value={headline}
+                        onChange={(e) => setHeadline(e.target.value)}
+                        placeholder="e.g. Summer Sale - 50% Off Everything"
+                      />
+                      <div className="flex items-center gap-2">
+                        <Label className="text-xs text-muted-foreground whitespace-nowrap">Position:</Label>
+                        <div className="flex flex-wrap gap-1.5">
+                          {TEXT_POSITIONS.map((tp) => (
+                            <button
+                              key={tp.value}
+                              type="button"
+                              onClick={() => setHeadlinePosition(tp.value)}
+                              className={`rounded-lg border px-2.5 py-1 text-xs font-medium transition-all ${
+                                headlinePosition === tp.value
+                                  ? "border-violet-500 bg-violet-500/10 text-violet-400"
+                                  : "border-border/50 text-muted-foreground hover:border-border hover:text-foreground"
+                              }`}
+                            >
+                              {tp.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="ad_copy">
+                        Ad Copy / Brief{" "}
+                        <span className="text-muted-foreground/50">(optional)</span>
+                      </Label>
+                      <Textarea
+                        id="ad_copy"
+                        value={adCopy}
+                        onChange={(e) => setAdCopy(e.target.value)}
+                        placeholder="Describe what should be in the image. Include any specific elements, mood, or style directions..."
+                        rows={3}
+                      />
+                      <div className="flex items-center gap-2">
+                        <Label className="text-xs text-muted-foreground whitespace-nowrap">Position:</Label>
+                        <div className="flex flex-wrap gap-1.5">
+                          {TEXT_POSITIONS.map((tp) => (
+                            <button
+                              key={tp.value}
+                              type="button"
+                              onClick={() => setAdCopyPosition(tp.value)}
+                              className={`rounded-lg border px-2.5 py-1 text-xs font-medium transition-all ${
+                                adCopyPosition === tp.value
+                                  ? "border-violet-500 bg-violet-500/10 text-violet-400"
+                                  : "border-border/50 text-muted-foreground hover:border-border hover:text-foreground"
+                              }`}
+                            >
+                              {tp.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {creativeStyle === "visuals_only" && (
+                  <div className="rounded-xl border border-border/50 bg-muted/30 p-4">
+                    <p className="text-sm text-muted-foreground">
+                      <span className="font-medium text-foreground">Visuals Only</span> — The generated creative will contain no text, headlines, or typographic elements.
+                      Pure visual composition only.
+                    </p>
+                  </div>
+                )}
 
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
